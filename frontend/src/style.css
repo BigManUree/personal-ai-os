@@ -2,106 +2,204 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Design tokens ── */
+/* ── 设计 token：私人档案馆 ─────────────────────────────────────
+   瓷青纸面 × 松烟墨 × 印泥朱。红色只表示「待裁决」；竹青表示激活。
+   零网络字体：正文系统黑体，标题楷体（档案批注的声音）。 */
 :root {
-  --bg: 250 250 251;
-  --surface: 255 255 255;
-  --elevated: 255 255 255;
-  --border: 229 231 235;
-  --fg: 17 24 39;
-  --fg-secondary: 75 85 99;
-  --fg-muted: 156 163 175;
-  --accent: 99 102 241;
-  --accent-soft: 238 238 255;
-  --success: 22 163 74;
-  --warning: 217 119 6;
-  --danger: 220 38 38;
-  --sidebar-bg: 248 248 250;
+  --bg: 238 242 239;            /* 瓷青纸 */
+  --surface: 251 252 251;       /* 宣白 */
+  --elevated: 244 248 245;      /* 纸面微沉 */
+  --border: 205 215 209;        /* 淡墨线 */
+  --fg: 31 45 40;               /* 松烟墨 */
+  --fg-secondary: 90 107 101;   /* 黛灰 */
+  --fg-muted: 141 160 154;      /* 灰青 */
+  --accent: 46 107 94;          /* 竹青 */
+  --accent-soft: 222 235 230;   /* 竹青纸 */
+  --seal: 194 71 46;            /* 印泥朱：待裁决 */
+  --seal-soft: 247 229 223;
+  --success: 63 125 78;         /* 苔绿 */
+  --warning: 183 121 31;        /* 藤黄 */
+  --danger: 194 71 46;          /* 与 seal 同源：删除=裁决 */
+  --sidebar-bg: 31 45 40;       /* 松烟墨 */
+  --sidebar-fg: 220 229 224;
+  --sidebar-muted: 142 161 154;
+  --sidebar-active: 79 168 146; /* 亮竹青 */
+  --sidebar-line: 62 82 76;
 }
 
 .dark {
-  --bg: 9 10 12;
-  --surface: 22 24 28;
-  --elevated: 32 34 40;
-  --border: 45 48 56;
-  --fg: 243 244 246;
-  --fg-secondary: 156 163 175;
-  --fg-muted: 107 114 128;
-  --accent: 129 140 248;
-  --accent-soft: 49 46 129;
-  --success: 34 197 94;
-  --warning: 245 158 11;
-  --danger: 239 68 68;
-  --sidebar-bg: 15 16 19;
+  --bg: 16 24 21;               /* 墨玉 */
+  --surface: 26 37 33;
+  --elevated: 33 46 41;
+  --border: 58 74 68;
+  --fg: 223 232 227;
+  --fg-secondary: 158 176 169;
+  --fg-muted: 104 122 115;
+  --accent: 79 168 146;         /* 亮竹青 */
+  --accent-soft: 38 66 58;
+  --seal: 224 106 80;
+  --seal-soft: 74 42 34;
+  --success: 102 187 123;
+  --warning: 222 165 82;
+  --danger: 224 106 80;
+  --sidebar-bg: 13 20 18;
+  --sidebar-fg: 214 224 219;
+  --sidebar-muted: 108 126 119;
+  --sidebar-active: 96 190 165;
+  --sidebar-line: 40 54 49;
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: -apple-system, 'PingFang SC', 'MiSans', 'HarmonyOS Sans SC',
+    'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
   background: rgb(var(--bg));
   color: rgb(var(--fg));
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar */
+/* 楷体：档案批注的声音。仅用于标题与品牌，正文保持黑体。 */
+.font-kai {
+  font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'FZKai-Z03S', serif;
+  letter-spacing: 0.02em;
+}
+
+/* 数字要精确：统计与表格数字等宽 */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Scrollbar：细墨条 */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgb(var(--border)); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgb(var(--fg-muted)); }
 
+/* 键盘焦点：竹青环，鼠标点击不显 */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium
+    @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded text-sm font-medium
       transition-all duration-150 cursor-pointer select-none border border-transparent
       disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-accent text-white hover:opacity-90 active:scale-[0.98];
+    /* 主操作 = 落墨 */
+    background: rgb(var(--fg));
+    color: rgb(var(--surface));
   }
+  .btn-primary:hover { opacity: 0.86; }
+  .btn-primary:active { transform: scale(0.98); }
   .btn-secondary {
     @apply btn bg-surface text-fg border-border hover:bg-elevated;
   }
   .btn-danger {
-    @apply btn bg-danger text-white hover:opacity-90;
+    @apply btn text-white;
+    background: rgb(var(--seal));
   }
+  .btn-danger:hover { opacity: 0.88; }
   .btn-ghost {
     @apply btn text-fg-secondary hover:bg-elevated;
   }
   .btn-sm { @apply px-2.5 py-1 text-xs; }
 
   .input {
-    @apply w-full px-3 py-2 rounded-md border border-border bg-surface text-fg text-sm
-      placeholder:text-fg-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent
-      transition-all;
+    @apply w-full px-3 py-2 rounded border bg-surface text-fg text-sm
+      placeholder:text-fg-muted focus:outline-none transition-all;
+    border-color: rgb(var(--border));
+  }
+  .input:focus {
+    border-color: rgb(var(--accent));
+    box-shadow: 0 0 0 2px rgb(var(--accent) / 0.18);
   }
   .label { @apply block text-xs font-medium text-fg-secondary mb-1; }
 
   .card {
-    @apply bg-surface border border-border rounded-lg;
+    @apply bg-surface border rounded;
+    border-color: rgb(var(--border));
   }
 
+  /* 图章式标签：细描边 + 同色淡底，代替实心胶囊 */
   .tag {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-elevated text-fg-secondary;
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium;
+    border: 1px solid rgb(var(--fg-muted) / 0.45);
+    color: rgb(var(--fg-secondary));
+    background: rgb(var(--fg-muted) / 0.07);
+  }
+  .tag-seal {
+    border-color: rgb(var(--seal) / 0.5);
+    color: rgb(var(--seal));
+    background: rgb(var(--seal) / 0.08);
   }
 
+  /* 侧栏导航（深墨底上的纸色文字） */
   .nav-item {
-    @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-fg-secondary
-      cursor-pointer transition-all hover:bg-elevated hover:text-fg;
+    @apply flex items-center gap-2.5 px-3 py-1.5 rounded text-sm cursor-pointer
+      transition-colors relative;
+    color: rgb(var(--sidebar-muted));
   }
+  .nav-item:hover { color: rgb(var(--sidebar-fg)); background: rgb(var(--sidebar-line) / 0.5); }
   .nav-item.active {
-    @apply bg-accent-soft text-accent font-medium;
+    color: rgb(var(--sidebar-fg));
+    background: rgb(var(--sidebar-line) / 0.6);
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: rgb(var(--sidebar-active));
+    border-radius: 1px;
   }
 
-  .page-enter {
-    animation: fadeUp 0.2s ease-out;
+  /* 品牌印：印泥朱方章 */
+  .brand-seal {
+    @apply flex items-center justify-center rounded-[4px] text-white shrink-0;
+    width: 26px;
+    height: 26px;
+    background: rgb(var(--seal));
+    font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', serif;
+    font-size: 15px;
+    line-height: 1;
   }
+
+  /* 筛选 tab 的选中态：竹青纸底，不与墨色主按钮抢注意力 */
+  .tab-on {
+    @apply inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium
+      cursor-pointer select-none border transition-colors;
+    border-color: rgb(var(--accent) / 0.55);
+    background: rgb(var(--accent-soft));
+    color: rgb(var(--accent));
+  }
+  .tab-on:hover { border-color: rgb(var(--accent)); }
+
+  /* 卡片标题接上批注的声音 */
+  .card h3, .card h2 {
+    font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'FZKai-Z03S', serif;
+    letter-spacing: 0.02em;
+  }
+
+  .page-enter { animation: fadeUp 0.18s ease-out; }
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -109,7 +207,7 @@ body {
   background: linear-gradient(90deg, rgb(var(--border)) 25%, rgb(var(--elevated)) 50%, rgb(var(--border)) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 @keyframes shimmer {
   0% { background-position: 200% 0; }

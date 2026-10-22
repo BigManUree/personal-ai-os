@@ -33,7 +33,7 @@ onMounted(load)
 <template>
   <div class="max-w-5xl mx-auto p-6 space-y-6">
     <div>
-      <h2 class="text-xl font-semibold">欢迎回来</h2>
+      <h2 class="text-xl font-kai font-semibold">欢迎回来</h2>
       <p class="text-sm" style="color: rgb(var(--fg-secondary))">你的个人 AI 工作空间，从这里开始。</p>
     </div>
 

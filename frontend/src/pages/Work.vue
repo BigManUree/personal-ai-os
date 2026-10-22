@@ -359,10 +359,10 @@ onMounted(load)
         <div class="mb-3 flex items-center justify-between gap-2">
           <h3 class="font-medium">项目 ({{ projects.length }})</h3>
           <div class="flex flex-wrap gap-1">
-            <button class="btn-sm" :class="projectFilter === '' ? 'btn-primary' : 'btn-secondary'"
+            <button class="btn-sm" :class="projectFilter === '' ? 'tab-on' : 'btn-secondary'"
                     @click="projectFilter = ''">全部</button>
             <button v-for="s in ['planning', 'active', 'paused', 'completed', 'archived']" :key="s"
-                    class="btn-sm" :class="projectFilter === s ? 'btn-primary' : 'btn-secondary'"
+                    class="btn-sm" :class="projectFilter === s ? 'tab-on' : 'btn-secondary'"
                     @click="projectFilter = s">{{ s }}</button>
           </div>
         </div>
@@ -450,10 +450,10 @@ onMounted(load)
         <div class="mb-3 flex items-center justify-between gap-2">
           <h3 class="font-medium">目标 ({{ goals.length }})</h3>
           <div class="flex flex-wrap gap-1">
-            <button class="btn-sm" :class="goalFilter === '' ? 'btn-primary' : 'btn-secondary'"
+            <button class="btn-sm" :class="goalFilter === '' ? 'tab-on' : 'btn-secondary'"
                     @click="goalFilter = ''">全部</button>
             <button v-for="s in ['active', 'done', 'dropped']" :key="s" class="btn-sm"
-                    :class="goalFilter === s ? 'btn-primary' : 'btn-secondary'"
+                    :class="goalFilter === s ? 'tab-on' : 'btn-secondary'"
                     @click="goalFilter = s">{{ s }}</button>
             <button class="btn-primary btn-sm" @click="openGoalForm()">新建目标</button>
           </div>
@@ -498,10 +498,10 @@ onMounted(load)
         <div class="mb-3 flex items-center justify-between gap-2">
           <h3 class="font-medium">任务 ({{ tasks.length }})</h3>
           <div class="flex flex-wrap gap-1">
-            <button class="btn-sm" :class="taskFilter === '' ? 'btn-primary' : 'btn-secondary'"
+            <button class="btn-sm" :class="taskFilter === '' ? 'tab-on' : 'btn-secondary'"
                     @click="taskFilter = ''">全部</button>
             <button v-for="s in ['todo', 'doing', 'done', 'cancelled']" :key="s" class="btn-sm"
-                    :class="taskFilter === s ? 'btn-primary' : 'btn-secondary'"
+                    :class="taskFilter === s ? 'tab-on' : 'btn-secondary'"
                     @click="taskFilter = s">{{ s }}</button>
             <button class="btn-primary btn-sm" @click="openTaskForm()">新建任务</button>
           </div>

@@ -947,3 +947,21 @@ pytest -q                     → 580 passed（零回归）
 第一轮联调 extraction 0 候选——首个服务实例上等待 3s 不足（真实模型提取响应秒级以上）且可能伴随一次瞬时失败；换新实例 + 15s 等待后稳定复现。诊断方式：脱离服务直接调用 `extract_candidates_from_messages` 确认链路本身完好。
 
 **未执行**：浏览器端 Playwright 流式冒烟（SSE 解析逻辑已由 0.12 mock 冒烟 6/6 覆盖，协议层无差异）；`deepseek-v4-pro` 模型对比。
+
+## 0.15 feature 012 视觉重塑「私人档案馆」（2026-10-22 15:05）
+
+spec：`specs/012-ui-restyle/`（含完整 token 表）。改 token 不改布局：`style.css` 重写 + `tailwind.config.js` + `App.vue` 壳层 7 处 + Work.vue 9 处 tab class + Overview 1 处 + favicon；13 个页面经 CSS 变量继承，业务逻辑零改动。
+
+- 色彩：瓷青纸 `#EEF2EF` / 松烟墨 `#1F2D28` / 竹青 `#2E6B5E`（激活）/ 印泥朱 `#C2472E`（唯一表示「待裁决」：审批徽标、删除、错误、品牌印）；暗色同构（墨玉 + 亮竹青）。
+- 字体：正文系统黑体栈；页题/品牌/卡片标题楷体（`KaiTi` 系，零网络字体）；统计数字 `tabular-nums`。
+- 组件：卡片去阴影收圆角（6px）、图章式标签、墨色实心只给主动作、`tab-on` 竹青纸筛选选中态、`:focus-visible` 竹青环、`prefers-reduced-motion` 全局降级。
+- 自审迭代 3 处：侧栏彩色 emoji（⏰→◷、⚙ 加 VS15）、筛选 tab 墨色实心抢戏→tab-on、卡片 h3 接楷体。
+
+```text
+npm run build        → ✓ 3.61s（index-9RNuP-QE.js）
+pytest -q            → 579 passed, 1 skipped（零回归；前端安全断言 onclick/v-html 不受影响）
+Playwright e2e_snooze.mjs（重播种库 18782）→ 15/15（首轮超时为库被前次运行污染，非回归）
+亮/暗截图            → temp/ui-{overview,chat,work}-before/after2.png、ui-overview-dark.png
+```
+
+未执行：逐页像素走查（13 页中抽查 3 页 + 暗色 1 页）；移动端断点实测（壳层响应式逻辑未动）。

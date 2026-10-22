@@ -49,8 +49,8 @@ const groups = [
     { id: 'approvals', icon: '✓', label: '操作审批', badge: 0 },
   ]},
   { label: '自动化', items: [
-    { id: 'reminders', icon: '⏰', label: '提醒中心' },
-    { id: 'settings', icon: '⚙', label: '设置' },
+    { id: 'reminders', icon: '◷', label: '提醒中心' },
+    { id: 'settings', icon: '⚙\uFE0E', label: '设置' },
   ]},
 ]
 
@@ -104,20 +104,20 @@ provide('navigate', navigate)
     <!-- Sidebar -->
     <aside
       v-if="sidebarOpen"
-      class="w-56 shrink-0 border-r border-border flex flex-col transition-all"
+      class="w-56 shrink-0 border-r flex flex-col transition-all"
       :class="isMobile ? 'fixed left-0 top-0 h-full z-20 shadow-xl' : ''"
-      style="background: rgb(var(--sidebar-bg))"
+      style="background: rgb(var(--sidebar-bg)); border-color: rgb(var(--sidebar-line))"
     >
-      <div class="px-4 py-4 flex items-center gap-2 border-b border-border">
-        <span class="text-lg">✦</span>
+      <div class="px-4 py-4 flex items-center gap-2.5 border-b" style="border-color: rgb(var(--sidebar-line))">
+        <span class="brand-seal">档</span>
         <div>
-          <div class="font-semibold text-sm">Personal AI OS</div>
-          <div class="text-xs" style="color: rgb(var(--fg-muted))">本地优先 · 单人工作台</div>
+          <div class="font-semibold text-sm font-kai" style="color: rgb(var(--sidebar-fg))">个人档案系统</div>
+          <div class="text-[11px]" style="color: rgb(var(--sidebar-muted))">本地优先 · 单人工作台</div>
         </div>
       </div>
       <nav class="flex-1 overflow-y-auto px-2 py-3 space-y-4">
         <div v-for="group in groups" :key="group.label">
-          <div class="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-wider" style="color: rgb(var(--fg-muted))">
+          <div class="px-2 mb-1.5 text-[11px] font-kai tracking-[0.2em]" style="color: rgb(var(--sidebar-muted))">
             {{ group.label }}
           </div>
           <div class="space-y-0.5">
@@ -132,15 +132,22 @@ provide('navigate', navigate)
               <span class="flex-1">{{ item.label }}</span>
               <span
                 v-if="item.badge"
-                class="ml-auto bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center"
+                class="ml-auto text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center tnum" style="background: rgb(var(--seal))"
               >{{ item.badge }}</span>
             </div>
           </div>
         </div>
       </nav>
-      <div class="px-3 py-3 border-t border-border">
-        <button class="btn-ghost w-full justify-start text-xs" @click="toggleTheme">
-          {{ darkMode ? '☀ 浅色模式' : '☾ 深色模式' }}
+      <div class="px-3 py-3 border-t" style="border-color: rgb(var(--sidebar-line))">
+        <button
+          class="w-full flex items-center gap-2 px-3 py-1.5 rounded text-xs transition-colors"
+          style="color: rgb(var(--sidebar-muted))"
+          onmouseover="this.style.color='rgb(var(--sidebar-fg))'"
+          onmouseout="this.style.color='rgb(var(--sidebar-muted))'"
+          @click="toggleTheme"
+        >
+          <span>{{ darkMode ? '☀' : '☾' }}</span>
+          <span>{{ darkMode ? '切到纸面' : '切到墨色' }}</span>
         </button>
       </div>
     </aside>
@@ -155,11 +162,11 @@ provide('navigate', navigate)
     <!-- Main content -->
     <main class="flex-1 flex flex-col overflow-hidden">
       <!-- Topbar -->
-      <header class="h-12 border-b border-border flex items-center px-4 gap-3 shrink-0 bg-surface">
+      <header class="h-12 border-b flex items-center px-4 gap-3 shrink-0 bg-surface" style="border-color: rgb(var(--border))">
         <button class="btn-ghost btn-sm lg:hidden" @click="sidebarOpen = !sidebarOpen">☰</button>
-        <h1 class="text-sm font-semibold">{{ pageTitle }}</h1>
+        <h1 class="text-[15px] font-kai" style="font-weight: 700">{{ pageTitle }}</h1>
         <div class="ml-auto flex items-center gap-2">
-          <span class="tag">本地运行</span>
+          <span class="tag"><span class="w-1.5 h-1.5 rounded-full" style="background: rgb(var(--success))"></span>本地运行</span>
         </div>
       </header>
       <!-- Page content -->
@@ -173,8 +180,8 @@ provide('navigate', navigate)
     <div
       v-for="t in toasts.list"
       :key="t.id"
-      class="px-4 py-2 rounded-lg text-sm shadow-lg text-white"
-      :class="t.type === 'success' ? 'bg-green-600' : t.type === 'error' ? 'bg-red-600' : 'bg-gray-700'"
+      class="px-4 py-2 rounded text-sm shadow-lg text-white"
+      :style="{ background: t.type === 'success' ? 'rgb(var(--success))' : t.type === 'error' ? 'rgb(var(--seal))' : 'rgb(var(--fg))' }"
     >{{ t.message }}</div>
   </div>
 </template>
