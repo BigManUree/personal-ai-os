@@ -1,0 +1,15 @@
+import { chromium } from 'playwright'
+const base = process.argv[2] || 'http://127.0.0.1:18784'
+const browser = await chromium.launch()
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+await page.goto(base + '/#/work', { waitUntil: 'networkidle' })
+await page.waitForTimeout(500)
+await page.screenshot({ path: '../temp/ui-btn-work.png' })
+await page.goto(base + '/#/reminders', { waitUntil: 'networkidle' })
+await page.waitForTimeout(500)
+await page.screenshot({ path: '../temp/ui-btn-reminders.png' })
+await page.goto(base + '/#/settings', { waitUntil: 'networkidle' })
+await page.waitForTimeout(500)
+await page.screenshot({ path: '../temp/ui-btn-settings.png' })
+console.log('shots done')
+await browser.close()

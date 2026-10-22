@@ -47,3 +47,7 @@
 ## 回滚
 
 `git revert <commit>`；或还原 `temp/bak-style-soft-before.css`、`temp/bak-app-vue-soft-before.vue`、`temp/bak-tailwind-soft-before.js` 后 `npm run build`（回到 012 档案风）。
+
+## 追加：按钮族重做（同日 16:05，用户反馈）
+
+用户不喜欢首轮按钮样式，要求所有按钮必须有可见 border-radius。`.btn` 家族按 STYLEKIT REQUIRED 重做：基类 `rounded-2xl`（16px）+ `px-5 py-2` + `font-semibold`；primary/secondary/danger 统一「悬浮上浮 -2px + 彩色柔影扩散 + 按下 scale(0.96)」三态；ghost 显式 `rounded-2xl`；`btn-sm` 等比 `rounded-xl`。新增 `disabled:translate-y-0` 防禁用态残留悬浮位移。验证与截图见 `docs/testing.md` 0.17 节。

@@ -980,3 +980,25 @@ e2e_snooze.mjs  → 15/15（重播种临时库 18783）
 ```
 
 冒烟插曲：首轮 e2e 导航超时——后台实例被回收，重启后通过；与风格改动无关。012 的内联 `onmouseover`（主题按钮）随本次回归 `nav-item` 一并移除，前端安全断言面更干净。
+
+## 0.17 按钮族重做（feature 013 追加，2026-10-22 16:05）
+
+用户反馈不喜欢按钮样式，明确要求**所有按钮必须有可见圆角**。按 STYLEKIT REQUIRED 按钮.token 全量重做 `.btn` 家族（`frontend/src/style.css`）：
+
+| 类 | 变更 |
+|---|---|
+| `.btn` 基类 | `rounded-xl` → **`rounded-2xl`**（16px）、`px-5 py-2`、`font-semibold`、`ease-in-out`、新增 `disabled:translate-y-0` |
+| `.btn-primary` | indigo-600 实心 + `0 10px 24px indigo/0.30` → 悬浮 `-2px` + `0 16px 32px /0.38`，按下 `scale(0.96)` |
+| `.btn-secondary` | 白底柔影加深（`0 4px 16px /0.08` → 悬浮 `0 12px 28px /0.13`），悬浮字色加深 |
+| `.btn-danger` | rose-600，与主按钮同构的悬浮/按下 |
+| `.btn-ghost` | `rounded-2xl` 显式声明，悬浮灰底 + 字色加深 |
+| `.btn-sm` | `rounded-xl`（12px，小尺寸等比） |
+
+```text
+npm run build   → ✓ 4.54s（index-_7dQuttj.css）
+pytest -q       → 579 passed, 1 skipped（零回归）
+e2e_snooze.mjs  → 15/15（重播种临时库 18784；首轮崩溃为库被部分执行污染，重播种即过）
+截图            → temp/ui-btn-{work,reminders,settings}.png（frontend/btn_shot.mjs 已入库）
+```
+
+回滚：`temp/bak-style-btn-r2.css` 或 `git revert <commit>`。

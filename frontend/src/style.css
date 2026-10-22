@@ -90,47 +90,54 @@ body {
 }
 
 @layer components {
-  /* ── 按钮：悬浮上浮 + 彩色柔影扩散，按下轻缩（Pillow Press） ── */
+  /* ── 按钮：rounded-2xl 大圆角 + 彩色柔影 + 悬浮上浮 + 按下回缩 ──
+     所有按钮必须有可见圆角（STYLEKIT REQUIRED：rounded-2xl）。 */
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium
-      transition-all duration-200 cursor-pointer select-none border-0
-      disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+    @apply inline-flex items-center justify-center gap-1.5 px-5 py-2 rounded-2xl text-sm font-semibold
+      transition-all duration-200 ease-in-out cursor-pointer select-none border-0
+      disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0;
   }
   .btn-primary {
     background: rgb(var(--accent-strong));
     color: #fff;
-    box-shadow: 0 8px 20px rgb(79 70 229 / 0.28);
+    box-shadow: 0 10px 24px rgb(79 70 229 / 0.30);
   }
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgb(79 70 229 / 0.36);
+    box-shadow: 0 16px 32px rgb(79 70 229 / 0.38);
   }
-  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:active { transform: scale(0.96); }
   .btn-secondary {
     @apply btn;
     background: rgb(var(--surface));
     color: rgb(var(--fg-secondary));
-    box-shadow: 0 2px 12px rgb(15 23 42 / 0.06);
+    box-shadow: 0 4px 16px rgb(15 23 42 / 0.08);
   }
   .btn-secondary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgb(15 23 42 / 0.10);
+    box-shadow: 0 12px 28px rgb(15 23 42 / 0.13);
+    color: rgb(var(--fg));
   }
+  .btn-secondary:active { transform: scale(0.96); }
   .btn-danger {
     @apply btn text-white;
     background: rgb(var(--danger));
-    box-shadow: 0 8px 20px rgb(225 29 72 / 0.28);
+    box-shadow: 0 10px 24px rgb(225 29 72 / 0.30);
   }
   .btn-danger:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgb(225 29 72 / 0.36);
+    box-shadow: 0 16px 32px rgb(225 29 72 / 0.38);
   }
+  .btn-danger:active { transform: scale(0.96); }
   .btn-ghost {
-    @apply btn shadow-none;
+    @apply btn rounded-2xl shadow-none font-medium;
     color: rgb(var(--fg-secondary));
   }
-  .btn-ghost:hover { background: rgb(var(--elevated)); }
-  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .btn-ghost:hover {
+    background: rgb(var(--elevated));
+    color: rgb(var(--fg));
+  }
+  .btn-sm { @apply px-3.5 py-1.5 text-xs rounded-xl; }
 
   /* ── 输入框：无边框灰底，聚焦白底 + 柔光环 ── */
   .input {
