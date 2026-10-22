@@ -122,7 +122,7 @@ def test_vector_disabled_degrades_to_lexical(isolated_db, monkeypatch):
 
 
 def test_status_and_reindex_endpoints(isolated_db, fake_embedding):
-    ids = _seed_doc(isolated_db, ["每天早晨跑步五公里", "数据库索引优化", "与两者无关的杂项"])
+    _seed_doc(isolated_db, ["每天早晨跑步五公里", "数据库索引优化", "与两者无关的杂项"])
     status = client.get("/api/embeddings/status").json()
     assert status["enabled"] is True
     assert status["chunks_total"] == 3 and status["chunks_indexed"] == 0
