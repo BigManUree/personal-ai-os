@@ -1038,3 +1038,25 @@ pytest -q     → 579 passed, 1 skipped（零回归）
 ```
 
 **教训**：组件类拆「基类 + 变体」时，变体必须要么 @apply 基类、要么页面强制组合写法；截图自审要覆盖每种变体，不能只看同一类页面。
+
+## 0.19 知识库删除 500 根因修复 + 对话删除（2026-10-22 16:40）
+
+### E1 · 知识库删除 500
+
+真实库副本上重放 16 个文档删除：**全部** `DatabaseError: database disk image is malformed`。机制：FTS5 external-content 索引与内容表失同步（chunk 未入索引/索引条目与行内容不一致）时，AD 触发器的 `'delete'` 命令必然抛 malformed → 删除路由 500 且整体回滚（文档永远删不掉）。诊断排除了行数缺失（16/16 在索引、integrity-check 通过——它只验 docid，检不出这种损坏）。实证两种失同步形态：内容漂移（绕过 AU 触发器 UPDATE）不报错；**chunk 插入时 AI 触发器缺失（rowid 从未入索引）必现 malformed**——后者作为回归测试的确定性复现。
+
+**修复**：`delete_document` 捕获 `sqlite3.DatabaseError` → `rebuild_chunks_fts(conn)`（新导出助手，`VALUES('rebuild')` 全量重索引）→ 重试一次。索引是派生数据，重建零损失。真实库已**预先 rebuild**（备份 `temp/bak-realdb-before-fts-rebuild.db`），回滚式探针确认 delete 命令恢复正常（未落任何写入，16 文档原样）。
+
+### 对话历史删除
+
+- 后端新增 `DELETE /api/conversations/{id}`（`app/api/chat.py`）：404 守卫、显式删 messages + conversations，重复删除 404。
+- 前端 `Chat.vue`：历史列表每项悬停出现 ✕（rounded-full 淡出淡入），点击后条目内联变为「删除此对话？删除/取消」（seal 色警示）；删除当前对话自动重置为新会话。
+
+```text
+pytest tests/test_fts_and_stream.py -q → 13 passed（+2：FTS 自愈、对话级联删除/404）
+pytest -q                             → 582 passed（零回归）
+真实库副本重放                        → 15/15 删除成功（修复前 0/16）
+线上 8000                             → 新路由生效（DELETE /api/conversations/999999 → 404 "对话不存在"）
+```
+
+未执行：浏览器端对话删除交互冒烟（逻辑与既有内联确认模式一致，源码断言覆盖）。

@@ -7,6 +7,8 @@ from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.schema_migrations import rebuild_chunks_fts as migrations_rebuild
+
 import app.main as _root
 from app import (
     behavior_events,
@@ -141,7 +143,14 @@ def delete_document(document_id: int) -> dict[str, bool]:
         row = conn.execute("SELECT id FROM documents WHERE id=?", (document_id,)).fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="资料不存在")
-        conn.execute("DELETE FROM document_chunks WHERE document_id=?", (document_id,))
+        try:
+            conn.execute("DELETE FROM document_chunks WHERE document_id=?", (document_id,))
+        except sqlite3.DatabaseError:
+            # FTS 索引与内容表失同步时，删除触发器会抛
+            # "database disk image is malformed" 并让整个删除 500。
+            # 索引是派生数据：原地 rebuild 后重试一次即可自愈。
+            migrations_rebuild(conn)
+            conn.execute("DELETE FROM document_chunks WHERE document_id=?", (document_id,))
         conn.execute("DELETE FROM documents WHERE id=?", (document_id,))
     return {"deleted": True}
 

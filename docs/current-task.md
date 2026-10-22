@@ -27,8 +27,8 @@ lifecycle 文件复跑 → 8 次连跑全绿（0.6 节修复后）
 
 ## 已完成（本轮新增）
 
-**feature 013：Soft UI 视觉重塑**（`specs/013-soft-ui/`，替换 012 档案风）：白卡柔影 + slate-50 + indigo + 大圆角 + 无边框输入框；禁止项全仓零命中；579 passed 零回归、e2e 15/15。
+**知识库删除 500 修复 + 对话历史删除**（0.19 节）：FTS 失同步自愈（rebuild + 重试）、真实库已预修复、`DELETE /api/conversations/{id}` + Chat.vue 悬停删除/内联确认。582 passed。
 
 ## 唯一下一步
 
-无待办。可选：`deepseek-v4-pro` 模型对比；其余页截图走查。
+无待办。

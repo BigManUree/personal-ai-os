@@ -215,3 +215,63 @@ def test_chat_stream_error_event_when_llm_fails(isolated_db, monkeypatch):
     assert events[-1][0] == "error" and "detail" in events[-1][1]
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.delenv("LLM_BASE_URL", raising=False)
+
+
+# ---------- 删除自愈与对话删除（feature 013 追加） ----------
+
+def test_delete_document_self_heals_desynced_fts(isolated_db):
+    """Form B desync: a chunk inserted while the AI trigger was missing never
+    enters the index; the delete-time 'delete' command then raises
+    "database disk image is malformed". The route must rebuild the index and
+    retry instead of returning 500."""
+    now = "2026-10-22T08:00:00"
+    with sqlite3.connect(isolated_db) as conn:
+        conn.execute("PRAGMA foreign_keys=ON")
+        cur = conn.execute(
+            "INSERT INTO documents(filename,content,source_type,status,created_at,updated_at,chunk_count) "
+            "VALUES('desync.md','x','manual_text','parsed',?,? ,1)", (now, now))
+        did = cur.lastrowid
+        # simulate the desync: insert the chunk without the AI trigger present
+        conn.execute("DROP TRIGGER chunks_fts_ai")
+        conn.execute(
+            "INSERT INTO document_chunks(document_id,chunk_index,content,heading,char_count,created_at) "
+            "VALUES(?,?,?,?,?,?)", (did, 0, "从未入索引的内容" * 3, None, 30, now))
+        conn.execute(
+            "CREATE TRIGGER chunks_fts_ai AFTER INSERT ON document_chunks BEGIN "
+            "INSERT INTO document_chunks_fts(rowid, content, heading) "
+            "VALUES (new.id, new.content, COALESCE(new.heading, '')); END;")
+
+    # sanity (separate connection so the rollback cannot undo the seeding):
+    # the direct delete really does fail before the fix path
+    with sqlite3.connect(isolated_db) as conn:
+        try:
+            conn.execute("DELETE FROM document_chunks WHERE document_id=?", (did,))
+            raise AssertionError("expected malformed error, got clean delete")
+        except sqlite3.DatabaseError:
+            pass  # expected; the with-block rolls the failed statement back
+        assert conn.execute("SELECT COUNT(*) FROM document_chunks WHERE document_id=?", (did,)).fetchone()[0] == 1
+
+    resp = client.delete(f"/api/documents/{did}")
+    assert resp.status_code == 200, resp.text
+    with sqlite3.connect(isolated_db) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM documents WHERE id=?", (did,)).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM document_chunks WHERE document_id=?", (did,)).fetchone()[0] == 0
+
+
+def test_delete_conversation_cascades_messages_and_404_after(isolated_db):
+    now = "2026-10-22T08:00:00"
+    with sqlite3.connect(isolated_db) as conn:
+        cur = conn.execute("INSERT INTO conversations(title,created_at) VALUES('待删对话',?)", (now,))
+        cid = cur.lastrowid
+        conn.execute("INSERT INTO messages(conversation_id,role,content,created_at) VALUES(?,?,?,?)",
+                     (cid, "user", "你好", now))
+        conn.execute("INSERT INTO messages(conversation_id,role,content,created_at) VALUES(?,?,?,?)",
+                     (cid, "assistant", "你好呀", now))
+
+    resp = client.delete(f"/api/conversations/{cid}")
+    assert resp.status_code == 200
+    assert resp.json() == {"deleted": True}
+    with sqlite3.connect(isolated_db) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM messages WHERE conversation_id=?", (cid,)).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM conversations WHERE id=?", (cid,)).fetchone()[0] == 0
+    assert client.delete(f"/api/conversations/{cid}").status_code == 404

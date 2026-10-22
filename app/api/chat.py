@@ -315,6 +315,18 @@ def get_messages(conversation_id: int) -> list[dict[str, Any]]:
         return [dict(r) for r in conn.execute("SELECT * FROM messages WHERE conversation_id=? ORDER BY id", (conversation_id,)).fetchall()]
 
 
+@router.delete("/api/conversations/{conversation_id}")
+def delete_conversation(conversation_id: int) -> dict[str, bool]:
+    """Delete a conversation and all of its messages."""
+    with _root.db() as conn:
+        row = conn.execute("SELECT id FROM conversations WHERE id=?", (conversation_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="对话不存在")
+        conn.execute("DELETE FROM messages WHERE conversation_id=?", (conversation_id,))
+        conn.execute("DELETE FROM conversations WHERE id=?", (conversation_id,))
+    return {"deleted": True}
+
+
 @router.post("/api/chat")
 async def chat(body: ChatIn) -> dict[str, Any]:
     with _root.db() as conn:

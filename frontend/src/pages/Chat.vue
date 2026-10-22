@@ -8,6 +8,21 @@ const messages = ref<any[]>([{ role: 'assistant', content: '你好！我是你�
 const input = ref('')
 const sending = ref(false)
 const convList = ref<any[]>([])
+const deletingId = ref<number | null>(null)
+
+async function removeConv(id: number) {
+  try {
+    await api(`/api/conversations/${id}`, { method: 'DELETE' })
+    if (currentConvId.value === id) {
+      currentConvId.value = null
+      messages.value = [{ role: 'assistant', content: '你好！我是你的个人 AI 助手。先在「个人档案」填写目标，再开始对话。' }]
+    }
+    deletingId.value = null
+    loadConvs()
+  } catch (e: any) {
+    show('删除失败：' + e.message, 'error')
+  }
+}
 const currentConvId = ref<number | null>(null)
 const convLoading = ref(true)
 
@@ -107,11 +122,25 @@ onMounted(loadConvs)
       </div>
       <div v-else-if="!convList.length" class="text-sm" style="color: rgb(var(--fg-muted))">暂无历史对话</div>
       <div v-for="c in convList" :key="c.id"
-        class="p-2 rounded-md cursor-pointer text-sm hover:bg-elevated transition-colors"
+        class="group relative p-2 rounded-md cursor-pointer text-sm hover:bg-elevated transition-colors"
         :class="{ 'bg-accent-soft': c.id === currentConvId }"
-        @click="loadConv(c.id)">
-        <div class="font-medium truncate">{{ c.title || '未命名对话' }}</div>
-        <div class="text-xs truncate" style="color: rgb(var(--fg-muted))">{{ c.last_message?.slice(0, 40) }}</div>
+        @click="deletingId === c.id ? undefined : loadConv(c.id)">
+        <template v-if="deletingId === c.id">
+          <div class="flex items-center gap-1.5" @click.stop>
+            <span class="flex-1 text-xs font-medium" style="color: rgb(var(--seal))">删除此对话？</span>
+            <button class="btn-danger btn-sm" @click="removeConv(c.id)">删除</button>
+            <button class="btn-ghost btn-sm" @click="deletingId = null">取消</button>
+          </div>
+        </template>
+        <template v-else>
+          <button
+            class="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-elevated"
+            style="color: rgb(var(--fg-muted))"
+            title="删除对话"
+            @click.stop="deletingId = c.id">✕</button>
+          <div class="font-medium truncate pr-6">{{ c.title || '未命名对话' }}</div>
+          <div class="text-xs truncate" style="color: rgb(var(--fg-muted))">{{ c.last_message?.slice(0, 40) }}</div>
+        </template>
       </div>
     </div>
     <!-- Chat area -->

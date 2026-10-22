@@ -210,3 +210,14 @@ def _migrate_chunks_fts(conn: sqlite3.Connection) -> None:
         "SELECT id, content, COALESCE(heading, '') FROM document_chunks "
         "WHERE id NOT IN (SELECT rowid FROM document_chunks_fts)"
     )
+
+
+def rebuild_chunks_fts(conn: sqlite3.Connection) -> None:
+    """Rebuild the chunks FTS index from the content table.
+
+    Self-heal for index/content desync (which makes every chunk DELETE raise
+    "database disk image is malformed"): trigram re-tokenizes every row, so
+    after this the delete triggers can run again. Safe to run any time —
+    the index is derived data.
+    """
+    conn.execute("INSERT INTO document_chunks_fts(document_chunks_fts) VALUES('rebuild')")
