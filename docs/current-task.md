@@ -1,6 +1,6 @@
 # 当前任务
 
-更新时间：2026-10-22 14:30 CST
+更新时间：2026-10-22 14:50 CST
 
 ## 任务目标
 
@@ -43,12 +43,9 @@ lifecycle 文件复跑 → 8 次连跑全绿（0.6 节修复后）
 - OpenAPI tags：9 个 router 分 9 组（84 操作），`/docs` 可按域浏览。
 - phase 3–5 spec 收口：009（数据接入，已实现对照）/ 010（分析建议，已实现对照）/ 011（受控 Agent，按安全边界豁免）；`docs/PLAN.md` 阶段状态同步。
 
-## 唯一待办（阻塞于外部输入）
+## 状态：全部收口（2026-10-22 14:50）
 
-**DeepSeek Key 无效**：用户提供的 Key（尾号 3e3d）被 api.deepseek.com 明确拒绝（401 invalid，4 次探测一致，见 0.13 节）。且 `deepseek-v4.1flash-1017` 非官方模型名，Key 可能来自第三方中转平台。
+**真实 DeepSeek 端点联调完成**（0.14 节）：0.13 的 401 是 Key 缺 `sk-` 前缀；补全后 probe 4/4，流式/extraction/密钥过滤全部实测通过，580 用例零回归。
 
-**需要用户提供**：
-1. 有效 Key（DeepSeek 开放平台 Key 以 `sk-` 开头；若为第三方平台请一并给 base_url）
-2. 正确模型名（官方：deepseek-chat / deepseek-reasoner）
-
-提供后：编辑 `.env` → `scripts/probe_llm.py` 4 步自检 → `run.bat` 浏览器验证。联调设施全部就位（0.12/0.13 节）。
+- `.env`（git 忽略）已配置 `deepseek-flash`；`run.bat` 启动即用真实模型。
+- 项目无任何待办。后续可选：`deepseek-v4-pro` 对比、浏览器端再冒烟一次。

@@ -919,3 +919,31 @@ DeepSeek 服务端明确返回 `Authentication Fails, Your api key: ****3e3d is 
 ```
 
 **未执行**：真实端点流式联调（阻塞于 Key）；`memory_extract` 真实候选质量评估（同前）。
+
+## 0.14 真实 DeepSeek 端点联调成功（2026-10-22 14:50）
+
+0.13 的 401 根因查明：**Key 缺少 `sk-` 前缀**。补全后 `scripts/probe_llm.py` 4/4 通过。
+
+### 平台事实
+
+- Key 所属平台模型列表为 `deepseek-flash` / `deepseek-v4-pro`（`deepseek-chat` 不在列但可用，疑为别名）；`.env` 已改用列表内的 `deepseek-flash`。
+- 非流式与流式（SSE 分片 + `[DONE]`）均为 OpenAI 标准形态，app 端零改动直接工作。
+
+### 实测（临时库 18780，真实 Key 仅进进程环境变量与 git 忽略的 .env）
+
+```text
+probe_llm.py 4 步            → 4/4（models / 模型在列 / 非流式 / 流式 32 deltas + [DONE]）
+流式事件序                    → meta→delta×88→done，delta 拼接 == done.answer
+回答质量                      → 带【资料证据】《项目笔记.md》#1 引用（FTS 检索 → 上下文注入 → 真实模型全链路）
+落库与续聊                    → user+assistant 落库、同会话第二轮走通
+extraction 真实模型路径       → 产生候选「用户常用的编辑器是 Neovim。」
+密钥过滤（真实模型产出）      → 消息含 api-key-sk-99988，候选中未泄漏（0.12 节 E1 修复在真实模型下有效）
+pytest -q                     → 580 passed（零回归）
+真实库 data/personal_ai_os.db → sha256=c459084d…（未变）
+```
+
+### 过程说明（如实登记）
+
+第一轮联调 extraction 0 候选——首个服务实例上等待 3s 不足（真实模型提取响应秒级以上）且可能伴随一次瞬时失败；换新实例 + 15s 等待后稳定复现。诊断方式：脱离服务直接调用 `extract_candidates_from_messages` 确认链路本身完好。
+
+**未执行**：浏览器端 Playwright 流式冒烟（SSE 解析逻辑已由 0.12 mock 冒烟 6/6 覆盖，协议层无差异）；`deepseek-v4-pro` 模型对比。
