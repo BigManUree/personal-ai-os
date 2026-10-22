@@ -888,3 +888,34 @@ extraction 经真实模型路径产生候选 / 密钥形态被过滤 / 正常候
 ```
 
 mock/验证脚本：`temp/mock_llm_server.py`、`temp/verify_mock_llm.py`（临时工具，不入库；正式回归在 `tests/test_fts_and_stream.py`）。真实库 sha256 未变（c459084d…，13:38 后保持）。**未执行**：真实云端端点的延迟/限流行为（仍需用户提供 Key）。
+
+## 0.13 真实 DeepSeek 端点联调尝试（2026-10-22 14:30）— 阻塞于无效 Key
+
+用户提供 DeepSeek Key（尾号 `****3e3d`）与模型名 `deepseek-v4.1flash-1017`。探测结果（4 次请求，全部 401）：
+
+```text
+GET  https://api.deepseek.com/models      → 401 invalid key
+GET  https://api.deepseek.com/v1/models   → 401 invalid key
+POST https://api.deepseek.com/chat/completions (deepseek-chat, max_tokens=4) → 401 invalid key
+```
+
+DeepSeek 服务端明确返回 `Authentication Fails, Your api key: ****3e3d is invalid`——**尾号与提供的 Key 一致，传输无损，是 Key 本身被服务端拒绝**（复制不完整 / 已吊销 / 未激活）。另：`deepseek-v4.1flash-1017` 不是 DeepSeek 开放平台官方模型名（官方为 `deepseek-chat` / `deepseek-reasoner`），该 Key 可能来自第三方中转平台——若是，还需对应 `LLM_BASE_URL`。
+
+### 已就位的联调设施（Key 修好后零改动即用）
+
+| 设施 | 位置 | 用途 |
+|---|---|---|
+| `.env` | 项目根（**git 已忽略**，Key 不入库） | 已填 base_url/model/key，`run.bat` 启动即加载 |
+| `scripts/probe_llm.py` | 已入库 | 4 步探测：/models → 模型存在 → 非流式 chat → 流式 [DONE]；任一步失败给出对应排查提示 |
+| mock 联调链路 | 0.12 节 | 流式/断流/落库/extraction 全部已验证 |
+
+### 恢复联调的操作
+
+```text
+1. 用户提供有效 Key（若为第三方平台，同时给 base_url）
+2. 编辑 .env 的 LLM_API_KEY（与 LLM_BASE_URL/LLM_MODEL，如需要）
+3. .venv/Scripts/python.exe scripts/probe_llm.py        → 预期 4/4 steps passed
+4. run.bat（或 uvicorn）→ 浏览器聊天页发消息验证流式
+```
+
+**未执行**：真实端点流式联调（阻塞于 Key）；`memory_extract` 真实候选质量评估（同前）。
