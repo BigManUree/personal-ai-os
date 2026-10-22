@@ -7,8 +7,6 @@ from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from app.schema_migrations import rebuild_chunks_fts as migrations_rebuild
-
 import app.main as _root
 from app import (
     behavior_events,
@@ -16,6 +14,7 @@ from app import (
     document_parse,
 )
 from app.document_parse import DocumentParseError, Page
+from app.schema_migrations import rebuild_chunks_fts as migrations_rebuild
 
 logger = logging.getLogger("personal_ai_os.api")
 
