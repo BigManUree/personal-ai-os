@@ -27,26 +27,8 @@ lifecycle 文件复跑 → 8 次连跑全绿（0.6 节修复后）
 
 ## 已完成（本轮新增）
 
-- **CI 首跑全绿**（run 39720882736）：ubuntu 38s / windows 2m41s / frontend 13s，Linux 平台差异为零。
-- **main.py 拆分完成**：821 行 + `app/api/` 九个域 router + `app/schema_migrations.py`。打点兼容设计（`_root` 晚绑定 + re-export）使 55 处 `app.main.DB_PATH` patch 与全部既有测试零改动通过。详见 `docs/testing.md` 0.10 节。
-
-## 已完成（本轮新增）
-
-**feature 008：FTS5 文档检索 + 聊天流式输出**（`specs/008-fts-and-streaming/`，579 passed）。
-
-- FTS：`_migrate_chunks_fts`（trigram external-content 表 + 触发器 + 幂等回填）；`retriever._fts_boost` bm25 加成、异常静默回退 lexical。
-- 流式：`POST /api/chat/stream` SSE（meta/delta/done/error），`Chat.vue` fetch + ReadableStream 增量渲染。
-- **E1 教训**：后台播种必须显式设 `DATABASE_PATH`，否则 `import app.main` 会打到真实库（本次仅幂等 DDL，数据完好，见 0.11 节）。
-
-## 已完成（本轮新增）
-
-- OpenAPI tags：9 个 router 分 9 组（84 操作），`/docs` 可按域浏览。
-- phase 3–5 spec 收口：009（数据接入，已实现对照）/ 010（分析建议，已实现对照）/ 011（受控 Agent，按安全边界豁免）；`docs/PLAN.md` 阶段状态同步。
-
-## 已完成（本轮新增）
-
-**feature 012 视觉重塑「私人档案馆」**（`specs/012-ui-restyle/`，15:05）：瓷青纸 × 松烟墨 × 印泥朱；楷体标题；图章标签；深色同构。579 passed 零回归，交互冒烟 15/15。
+**feature 013：Soft UI 视觉重塑**（`specs/013-soft-ui/`，替换 012 档案风）：白卡柔影 + slate-50 + indigo + 大圆角 + 无边框输入框；禁止项全仓零命中；579 passed 零回归、e2e 15/15。
 
 ## 唯一下一步
 
-无待办。可选：其余 10 页的截图走查、移动端断点实测、`deepseek-v4-pro` 对比。
+无待办。可选：`deepseek-v4-pro` 模型对比；其余页截图走查。

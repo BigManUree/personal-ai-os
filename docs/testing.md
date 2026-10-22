@@ -965,3 +965,18 @@ Playwright e2e_snooze.mjs（重播种库 18782）→ 15/15（首轮超时为库�
 ```
 
 未执行：逐页像素走查（13 页中抽查 3 页 + 暗色 1 页）；移动端断点实测（壳层响应式逻辑未动）。
+
+## 0.16 feature 013 视觉重塑 Soft UI（2026-10-22 15:45）
+
+用户否决 012「私人档案馆」，指定 Soft UI 风格套件（完整 Hard Prompt）。token 级替换，13 页零逻辑改动：白卡片 `rounded-2xl` + 彩色柔影 + 悬浮上浮、slate-50 底、indigo 主色、无边框灰底输入框 + 柔光环聚焦、白色侧栏 + `indigo-50` 选中块、去楷体、favicon 改 indigo 圆角方。
+
+**禁止项自检（全仓 grep）**：`rounded-none`/`border-black`/`bg-black`/`shadow-[`/`border-2`/`border-4` 零命中（两处遮罩 `bg-black/xx` 已改 `bg-slate-900/xx`）；所有阴影带模糊。
+
+```text
+npm run build   → ✓ 3.31s（index-DsOxe0i5.js）
+pytest -q       → 579 passed, 1 skipped（零回归）
+e2e_snooze.mjs  → 15/15（重播种临时库 18783）
+截图            → temp/ui-{overview,chat,work}-soft.png、ui-{overview,work}-dark.png
+```
+
+冒烟插曲：首轮 e2e 导航超时——后台实例被回收，重启后通过；与风格改动无关。012 的内联 `onmouseover`（主题按钮）随本次回归 `nav-item` 一并移除，前端安全断言面更干净。

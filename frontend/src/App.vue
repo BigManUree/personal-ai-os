@@ -104,20 +104,20 @@ provide('navigate', navigate)
     <!-- Sidebar -->
     <aside
       v-if="sidebarOpen"
-      class="w-56 shrink-0 border-r flex flex-col transition-all"
+      class="w-56 shrink-0 border-r flex flex-col transition-all shadow-shell"
       :class="isMobile ? 'fixed left-0 top-0 h-full z-20 shadow-xl' : ''"
       style="background: rgb(var(--sidebar-bg)); border-color: rgb(var(--sidebar-line))"
     >
       <div class="px-4 py-4 flex items-center gap-2.5 border-b" style="border-color: rgb(var(--sidebar-line))">
         <span class="brand-seal">档</span>
         <div>
-          <div class="font-semibold text-sm font-kai" style="color: rgb(var(--sidebar-fg))">个人档案系统</div>
+          <div class="font-semibold text-sm" style="color: rgb(var(--sidebar-fg))">个人档案系统</div>
           <div class="text-[11px]" style="color: rgb(var(--sidebar-muted))">本地优先 · 单人工作台</div>
         </div>
       </div>
       <nav class="flex-1 overflow-y-auto px-2 py-3 space-y-4">
         <div v-for="group in groups" :key="group.label">
-          <div class="px-2 mb-1.5 text-[11px] font-kai tracking-[0.2em]" style="color: rgb(var(--sidebar-muted))">
+          <div class="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-wider" style="color: rgb(var(--sidebar-muted))">
             {{ group.label }}
           </div>
           <div class="space-y-0.5">
@@ -139,15 +139,9 @@ provide('navigate', navigate)
         </div>
       </nav>
       <div class="px-3 py-3 border-t" style="border-color: rgb(var(--sidebar-line))">
-        <button
-          class="w-full flex items-center gap-2 px-3 py-1.5 rounded text-xs transition-colors"
-          style="color: rgb(var(--sidebar-muted))"
-          onmouseover="this.style.color='rgb(var(--sidebar-fg))'"
-          onmouseout="this.style.color='rgb(var(--sidebar-muted))'"
-          @click="toggleTheme"
-        >
+        <button class="nav-item w-full" @click="toggleTheme">
           <span>{{ darkMode ? '☀' : '☾' }}</span>
-          <span>{{ darkMode ? '切到纸面' : '切到墨色' }}</span>
+          <span>{{ darkMode ? '浅色模式' : '深色模式' }}</span>
         </button>
       </div>
     </aside>
@@ -155,7 +149,7 @@ provide('navigate', navigate)
     <!-- Mobile overlay -->
     <div
       v-if="sidebarOpen && isMobile"
-      class="fixed inset-0 bg-black/30 z-10"
+      class="fixed inset-0 bg-slate-900/30 z-10"
       @click="sidebarOpen = false"
     />
 
@@ -164,7 +158,7 @@ provide('navigate', navigate)
       <!-- Topbar -->
       <header class="h-12 border-b flex items-center px-4 gap-3 shrink-0 bg-surface" style="border-color: rgb(var(--border))">
         <button class="btn-ghost btn-sm lg:hidden" @click="sidebarOpen = !sidebarOpen">☰</button>
-        <h1 class="text-[15px] font-kai" style="font-weight: 700">{{ pageTitle }}</h1>
+        <h1 class="text-[15px] font-semibold">{{ pageTitle }}</h1>
         <div class="ml-auto flex items-center gap-2">
           <span class="tag"><span class="w-1.5 h-1.5 rounded-full" style="background: rgb(var(--success))"></span>本地运行</span>
         </div>
