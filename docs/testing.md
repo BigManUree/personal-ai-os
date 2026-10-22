@@ -1,6 +1,6 @@
 # 测试记录
 
-更新时间：2026-10-22 12:10 CST
+更新时间：2026-10-22 13:25 CST
 
 ## 0. 2026-10-21 缺陷修复批次（当前结论）
 
@@ -759,3 +759,53 @@ Playwright frontend/e2e_credential.mjs（播种库 18771）→ 12/12
 - `backend` job：ubuntu + windows 矩阵（0.6 节的 READONLY 竞争是 Windows 特有，双平台才有区分度）——pip 安装 → `ruff check` → `compileall` → `pytest -q`。
 - `frontend` job：node 20 + `npm ci` → `npm run build` → 校验 `app/static/index.html` 与 hash 产物存在。
 - 未执行：CI 首次真实运行（需推送后观察 Actions 结果；Linux 上 pytest 是否全绿属待验证项）。
+
+## 0.10 main.py 拆分 + CI 首跑收口（2026-10-22 13:25）
+
+### CI 首跑（0.9 节遗留项）
+
+run 39720882736（`46cbf98`）：**三 job 全绿**——backend(ubuntu) 38s、backend(windows) 2m41s、frontend 13s。前两次失败 run 均为已修复的 `.gitignore` glob（ruff E902 双平台一致报错）。**Linux 平台差异为零**：569 用例在 ubuntu 首跑即过，无路径/时区类失败。
+
+### main.py 拆分
+
+3,495 行 / 88 路由 → **main.py 821 行**（app 组装 + lifespan + 中间件 + init_db + index/health/approvals）+ `app/schema_migrations.py`（172 行，conn 参数化迁移函数）+ `app/api/` 九个域 router（共 2,907 行）：
+
+| 模块 | 行数 | 内容 |
+|---|---|---|
+| `app/api/memory.py` | 403 | 画像/记忆/候选/洞察 + extract |
+| `app/api/reminders.py` | 67 | 提醒列表/迁移/设置 |
+| `app/api/documents.py` | 150 | 文档 CRUD/上传 + `_store_parsed_document` |
+| `app/api/work.py` | 463 | 项目/目标/任务 |
+| `app/api/analytics.py` | 87 | 行为事件 + 周期对比 |
+| `app/api/profile_items.py` | 353 | 画像条目九路由 |
+| `app/api/connectors.py` | 656 | 数据源/凭据/同步 |
+| `app/api/recommendations.py` | 320 | 建议/反馈/outcome/runs/统计 |
+| `app/api/chat.py` | 268 | 对话/聊天 + LLM 助手 |
+
+**打点兼容设计**（55 处 `app.main.DB_PATH` patch 不失效的关键）：
+
+- `db()` 留在 main，router 通过 `import app.main as _root` **晚绑定**调用——`db()` 函数对象的 `__globals__` 是 main 的模块字典，patch `app.main.DB_PATH` 运行时生效。
+- `record_behavior_event`、`_store_parsed_document` 同样晚绑定（有测试 patch `app.main.<name>`）。
+- `call_llm`/`_store_candidates`/`_due_source_ids`/`_run_source_sync` 等测试按值 import 的符号由 main re-export。
+- github/httpapi 的 self-register import 带 `# noqa: F401` 随 connectors router 保留。
+
+### 过程中的错误与修复（全部由全量测试捕获）
+
+1. 替换规则叠加产生 `_root._root.` 双重前缀（analytics 首个失败暴露）→ 全局清理两次。
+2. router 头部超集 import 漏 `datetime`/`os`/`hashlib`/`connector_scheduler`/`sqlite3`（schema_migrations）→ 逐个补。
+3. 三个调度器实例全局与 `_REMINDER_SETTINGS_READ_ONLY`、`DATA_SOURCE_STATUSES` 原来定义在路由区块中间，被误切 → 回 main / 留在正确模块。
+4. `app.mount("/static", ...)` 在重组时被漏（`seg(65,119)` 边界差一行）→ 静态 404、mount 缺失，补回。
+5. ruff --fix 删掉 main 的 `import httpx`（测试 `main.httpx` monkeypatch 依赖）→ 带 noqa 恢复。
+6. `scripts/e2e/seed_*.py` 收编时 `parent.parent` 少一层 → `parents[2]`。
+
+### 验证
+
+```text
+ruff check app tests  → All checks passed
+pytest --collect-only → 569 tests（与拆分前一致）
+pytest -q             → 568 passed, 1 skipped（symlink 环境性）
+API 路由数            → 88（拆分前后一致）
+Playwright e2e_snooze.mjs（播种库 18772）→ 15/15
+  连接器注册表 4 种齐全（self-register 生效）、静态 200、各域接口正常
+真实库 data/personal_ai_os.db：sha256=008ecb5c…ddfb、mtime=2026-10-14 23:11:17 未变
+```

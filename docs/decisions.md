@@ -1,5 +1,22 @@
 # 技术决策记录
 
+## 2026-10-22：main.py 拆分采用「router 晚绑定 app.main」而非依赖注入
+
+### 背景
+
+3,495 行 / 88 路由的单文件不可维护；但 55 处测试 patch `app.main.DB_PATH`、若干处 patch `app.main.record_behavior_event` / `main.httpx`，任何"符号搬到新模块"的拆法都会让这些 patch 落空。
+
+### 方案对比
+
+- **方案 A：状态下沉 `app/api/core.py` + 测试改打点**。架构最干净，但要改 55+ 处测试，且 DB_PATH 的单一事实源转移后所有文档失效。
+- **方案 B：FastAPI Depends 注入**。改动每个路由签名，收益主要是测试隔离——本项目测试走 TestClient + 独立库文件，不需要。
+- **方案 C（采用）：router 内 `import app.main as _root` 晚绑定**。`db()` 定义留在 main（其 `__globals__` 即 main 字典），patch `app.main.DB_PATH` 对所有 router 生效；被 patch 的助手（record_behavior_event、_store_parsed_document）也经 `_root`；按值 import 的符号由 main re-export。测试零改动。
+
+### 代价
+
+- router → main 是显式循环引用（Python 允许，靠"main 先定义 db 再 import routers"的顺序约束），已在 main.py 注释说明；`docs/module-responsibilities.md` 的依赖规则已同步修订为"`app/api/*` 例外允许"。
+- `_root.` 前缀在 router 代码里语义单一：凡 `_root.X` 即"可能被测试打点或依赖 main 状态"；未来若彻底解耦，只需把这几个符号下沉并改测试打点。
+
 ## 2026-10-22：凭据 UI 遵循 write-only 纪律，编辑表单不含 secret
 
 ### 背景

@@ -1,6 +1,6 @@
 # 当前任务
 
-更新时间：2026-10-22 12:10 CST
+更新时间：2026-10-22 13:25 CST
 
 ## 任务目标
 
@@ -27,14 +27,17 @@ lifecycle 文件复跑 → 8 次连跑全绿（0.6 节修复后）
 
 ## 已完成（本轮新增）
 
-- Git 初始化 + 首次提交 `b3388af` + 推送 `origin/main`（`https://github.com/BigManUree/personal-ai-os.git`）。
-- ruff 全绿（配置见 0.9 节），顺带修掉一个真缺陷：`NotificationConfigError` 被引用但从未定义。
-- `.github/workflows/ci.yml` 双平台 CI 就位。
-- 播种脚本收编进 `scripts/e2e/` 并入库，文档引用同步。
+- **CI 首跑全绿**（run 39720882736）：ubuntu 38s / windows 2m41s / frontend 13s，Linux 平台差异为零。
+- **main.py 拆分完成**：821 行 + `app/api/` 九个域 router + `app/schema_migrations.py`。打点兼容设计（`_root` 晚绑定 + re-export）使 55 处 `app.main.DB_PATH` patch 与全部既有测试零改动通过。详见 `docs/testing.md` 0.10 节。
 
 ## 唯一下一步
 
-**观察 CI 首跑并修平台差异。** 推送已触发 Actions（若仓库已启用 CI）：确认 ubuntu 与 windows 两个 backend job、frontend job 的结果。预期风险点是 Linux 上个别测试的路径/时区假设。如有失败，按失败清单逐个修——它们就是"换平台才会暴露"的真实缺陷。 项目至今不是 git 仓库——七批 feature 的回滚全靠 `temp/bak-*` 手工备份，这在真实开发里不可持续。
+**FTS5 检索与聊天流式输出**（审查报告最后的两个功能项）。FTS5：`document_chunks` 表建虚拟表 + 触发器同步，`retriever.search_chunks` 换 MATCH 查询，注意中文分词（FTS5 默认 unicode61 对中文按字切分，可用 trigram 或保持现状）。流式输出：`/api/chat` 改 SSE（`StreamingResponse`），前端 `Chat.vue` 用 fetch + ReadStream 渲染；`call_llm` 已有 httpx，流式读 `response.aiter_lines()`。
+
+### 再往后
+
+1. phase 3–5 spec 补齐或豁免。
+2. 可选：给 `app/api/` 各 router 补 `tags` 便于 OpenAPI 文档分组。 项目至今不是 git 仓库——七批 feature 的回滚全靠 `temp/bak-*` 手工备份，这在真实开发里不可持续。
 
 | 步骤 | 内容 |
 | --- | --- |

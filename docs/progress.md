@@ -1,6 +1,6 @@
 # 项目进度
 
-更新时间：2026-10-22 12:10 CST
+更新时间：2026-10-22 13:25 CST
 
 ## 当前阶段
 
@@ -64,7 +64,7 @@
 
 ## 本轮未开始（审查报告中的 P1/P2）
 
-- 前端能力补齐：**审查报告中列出的前端缺口已全部补齐**（凭据管理=007、snooze/对比=006、画像=005、工作项=003、建议闭环=002/004）。Git 仓库已初始化并推送 `origin/main`（`https://github.com/BigManUree/personal-ai-os.git`），ruff 全绿，CI 双平台工作流已就位（首跑结果待验证）。剩余：main.py 拆分、FTS5、聊天流式输出。
+- 前端能力补齐：**审查报告中列出的前端缺口已全部补齐**（凭据管理=007、snooze/对比=006、画像=005、工作项=003、建议闭环=002/004）。Git 已推送且 **CI 三 job 首跑全绿**（ubuntu/windows/frontend，Linux 平台差异为零）；**main.py 已拆分**（3,495→821 行 + 9 个域 router + schema_migrations），88 路由与 569 用例一一对应。剩余：FTS5、聊天流式输出。
 - 与上面连带：4 个前端断言原先校验已删除脚本的内部实现，现改为校验构建产物与 `frontend/src`（无 `v-html`/`innerHTML`、无 `onclick=`、产物与 `index.html` 引用一致）；feature 003/004 已把工作项与建议洞察的断言补回。
 - 架构：拆分 `app/main.py`（3,461 行 / 88 路由）、引入迁移版本表（`PRAGMA user_version`）。
 - 工程化：Git 初始化、CI、ruff/类型检查、前端测试脚本。
