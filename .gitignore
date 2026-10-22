@@ -1,0 +1,51 @@
+# Python virtual environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Local secrets and environment
+.env
+.env.*
+!.env.example
+*.key
+
+# Local runtime data: databases, backups, encryption keys, logs
+data/*
+!data/.gitkeep
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.log
+
+# Build/packaging output
+build/
+dist/
+*.egg-info/
+
+# Editor/OS temporary files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local working artifacts (manual backups, smoke-test scratch, seeds)
+temp/
+
+# Frontend dependencies
+frontend/node_modules/
+
+# AI assistant workspace data
+.workbuddy/
+
+# stray artifacts
+({text

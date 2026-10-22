@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ── */
+:root {
+  --bg: 250 250 251;
+  --surface: 255 255 255;
+  --elevated: 255 255 255;
+  --border: 229 231 235;
+  --fg: 17 24 39;
+  --fg-secondary: 75 85 99;
+  --fg-muted: 156 163 175;
+  --accent: 99 102 241;
+  --accent-soft: 238 238 255;
+  --success: 22 163 74;
+  --warning: 217 119 6;
+  --danger: 220 38 38;
+  --sidebar-bg: 248 248 250;
+}
+
+.dark {
+  --bg: 9 10 12;
+  --surface: 22 24 28;
+  --elevated: 32 34 40;
+  --border: 45 48 56;
+  --fg: 243 244 246;
+  --fg-secondary: 156 163 175;
+  --fg-muted: 107 114 128;
+  --accent: 129 140 248;
+  --accent-soft: 49 46 129;
+  --success: 34 197 94;
+  --warning: 245 158 11;
+  --danger: 239 68 68;
+  --sidebar-bg: 15 16 19;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--fg-muted)); }
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium
+      transition-all duration-150 cursor-pointer select-none border border-transparent
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:opacity-90 active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply btn bg-surface text-fg border-border hover:bg-elevated;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white hover:opacity-90;
+  }
+  .btn-ghost {
+    @apply btn text-fg-secondary hover:bg-elevated;
+  }
+  .btn-sm { @apply px-2.5 py-1 text-xs; }
+
+  .input {
+    @apply w-full px-3 py-2 rounded-md border border-border bg-surface text-fg text-sm
+      placeholder:text-fg-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent
+      transition-all;
+  }
+  .label { @apply block text-xs font-medium text-fg-secondary mb-1; }
+
+  .card {
+    @apply bg-surface border border-border rounded-lg;
+  }
+
+  .tag {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-elevated text-fg-secondary;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-fg-secondary
+      cursor-pointer transition-all hover:bg-elevated hover:text-fg;
+  }
+  .nav-item.active {
+    @apply bg-accent-soft text-accent font-medium;
+  }
+
+  .page-enter {
+    animation: fadeUp 0.2s ease-out;
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--border)) 25%, rgb(var(--elevated)) 50%, rgb(var(--border)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
