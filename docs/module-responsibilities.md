@@ -1,6 +1,6 @@
 # 模块职责与依赖规则
 
-更新时间：2026-10-22 13:25 CST
+更新时间：2026-10-22 13:50 CST
 
 本文件只记录当前真实存在的模块。`app/` 采用按领域扁平组织；没有实际用途的 `api/`、`repositories/`、`utils/` 目录本轮不创建。
 
@@ -9,6 +9,8 @@
 | `app/main.py` | FastAPI 组装：lifespan、中间件、`init_db()`（schema DDL + 调迁移）、index/health/approvals 路由；`include_router` 挂载 `app/api/` 九个域 router；re-export 测试按值 import 的符号 | `app`、`init_db()`、HTTP JSON/静态文件 | 全部领域模块、`app/api/*`、FastAPI、sqlite3 | `DB_PATH`/`db()`/`record_behavior_event` 是全仓打点单一事实源；先校验提醒配置再初始化数据库；默认不启动提醒循环；健康检查只暴露脱敏状态 |
 | `app/api/` | 按域拆分的 APIRouter（memory/reminders/documents/work/analytics/profile_items/connectors/recommendations/chat），路由处理函数与 Pydantic 模型 | Python | `app.main`（`db`/`now_iso` 等经 `_root` 晚绑定）、各领域模块 | 不自行读环境变量构造路径，一律经 `app.main.db()`；跨 router 共享助手放 documents/chat |
 | `app/schema_migrations.py` | 幂等 SQLite 迁移（conn 参数化纯函数） | Python | 传入的连接 | 只做条件 ALTER/UPDATE，不删数据，可重复执行 |
+| `app/retriever.py` | 关键词检索（memories/chunks/work items），chunks 走 FTS5 trigram 加成 + lexical 兜底 | Python | 传入的连接、`document_chunks_fts` | FTS 异常静默降级，不抛给调用方 |
+| `frontend/e2e_chat_stream.mjs` | 聊天流式 Playwright 冒烟脚本 | Node ESM 脚本 | `playwright`、运行中的服务 | 需配合 `scripts/e2e/seed_chat.py` 播种，只指向临时库 |
 
 | `model_config.py` | OpenAI 兼容模型环境配置 | `load_model_config()` | `os`、dataclass | 不发请求、不记录密钥；`tests/test_model_config.py` |
 | `memory_extract.py` | 从最近对话构造提示、调用模型、校验候选 | `extract_candidates_from_messages()` | httpx、`model_config`、Pydantic | 不写库；网络在测试中 mock |

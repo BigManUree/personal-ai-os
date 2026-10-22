@@ -1,5 +1,20 @@
 # 技术决策记录
 
+## 2026-10-22：FTS5 用 trigram 做「加成」而非「替换」，流式不做重试
+
+### FTS5 与 lexical 的关系
+
+- trigram 是唯一对中文可用的内置分词（unicode61 整串成 token），但要求词 ≥3 字符——「跑步」这类双字词查不到。
+- 决策：**lexical bigram 打分保持主路径，FTS bm25 只做排序加成**。命中集合取并集语义（FTS 命中的 chunk 得额外分），短查询自然回退，FTS 表损坏/缺失静默降级。代价：`search_chunks` 仍全量扫描 100 行（数据量小不构成问题；纯 FTS 分页是未来优化）。
+
+### 流式不重试
+
+非流式 `call_llm` 有 5 次退避重试；流式**不做**——delta 已经发给客户端后无法安全重放。失败以 SSE `error` 事件收尾，前端把错误拼进气泡。代价：瞬时网络抖动会直接失败，用户重发即可。
+
+### 播种脚本的 DATABASE_PATH 硬校验（E1 事故）
+
+`scripts/e2e/seed_*.py` 若漏设 `DATABASE_PATH`，`import app.main` 即对默认真实库执行 `init_db()`。本次仅幂等 DDL 无损失，但同类失误可能造成不可逆写入。**规则：播种/冒烟脚本启动时必须断言 `DATABASE_PATH` 已设置且包含 `temp/`（或 `e2e-`），否则立即退出。**
+
 ## 2026-10-22：main.py 拆分采用「router 晚绑定 app.main」而非依赖注入
 
 ### 背景

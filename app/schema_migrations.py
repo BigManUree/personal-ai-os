@@ -171,3 +171,42 @@ def _migrate_recommendations(conn: sqlite3.Connection) -> None:
             )
 
 
+
+
+def _migrate_chunks_fts(conn: sqlite3.Connection) -> None:
+    """FTS5 index over document_chunks (external-content, trigram tokenizer).
+
+    trigram (SQLite >= 3.34) is required because unicode61 treats a run of
+    CJK characters as ONE token, which makes Chinese queries useless. With
+    trigram, queries shorter than 3 characters match nothing — the lexical
+    bigram scorer in app.retriever remains the fallback for those.
+
+    The index is derived data: rebuilding it is always safe, and the backfill
+    below is incremental (rowid NOT IN fts) so init_db stays idempotent.
+    """
+    conn.execute(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS document_chunks_fts USING fts5("
+        "content, heading, content='document_chunks', content_rowid='id', "
+        "tokenize='trigram')"
+    )
+    conn.executescript("""
+        CREATE TRIGGER IF NOT EXISTS chunks_fts_ai AFTER INSERT ON document_chunks BEGIN
+            INSERT INTO document_chunks_fts(rowid, content, heading)
+            VALUES (new.id, new.content, COALESCE(new.heading, ''));
+        END;
+        CREATE TRIGGER IF NOT EXISTS chunks_fts_ad AFTER DELETE ON document_chunks BEGIN
+            INSERT INTO document_chunks_fts(document_chunks_fts, rowid, content, heading)
+            VALUES ('delete', old.id, old.content, COALESCE(old.heading, ''));
+        END;
+        CREATE TRIGGER IF NOT EXISTS chunks_fts_au AFTER UPDATE ON document_chunks BEGIN
+            INSERT INTO document_chunks_fts(document_chunks_fts, rowid, content, heading)
+            VALUES ('delete', old.id, old.content, COALESCE(old.heading, ''));
+            INSERT INTO document_chunks_fts(rowid, content, heading)
+            VALUES (new.id, new.content, COALESCE(new.heading, ''));
+        END;
+    """)
+    conn.execute(
+        "INSERT INTO document_chunks_fts(rowid, content, heading) "
+        "SELECT id, content, COALESCE(heading, '') FROM document_chunks "
+        "WHERE id NOT IN (SELECT rowid FROM document_chunks_fts)"
+    )

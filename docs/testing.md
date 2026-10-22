@@ -1,6 +1,6 @@
 # 测试记录
 
-更新时间：2026-10-22 13:25 CST
+更新时间：2026-10-22 13:50 CST
 
 ## 0. 2026-10-21 缺陷修复批次（当前结论）
 
@@ -809,3 +809,36 @@ Playwright e2e_snooze.mjs（播种库 18772）→ 15/15
   连接器注册表 4 种齐全（self-register 生效）、静态 200、各域接口正常
 真实库 data/personal_ai_os.db：sha256=008ecb5c…ddfb、mtime=2026-10-14 23:11:17 未变
 ```
+
+## 0.11 feature 008 FTS5 文档检索 + 聊天流式输出（2026-10-22 13:50）
+
+spec：`specs/008-fts-and-streaming/`。
+
+### FTS5（`document_chunks` 索引）
+
+- `app/schema_migrations.py::_migrate_chunks_fts`：external-content 虚拟表（`content='document_chunks'`，`tokenize='trigram'`——unicode61 把中文整串当一个 token 不可用）+ AI/AD/AU 三个触发器 + 增量回填（`id NOT IN fts`，幂等）。
+- `app/retriever.py::_fts_boost`：查询含 ≥3 字符词时 FTS MATCH（phrase 化防关键字泄漏），bm25 加成 `max(0, 3.0+rank)`；任何 sqlite3.Error 静默回退纯 lexical。`search_chunks` 返回结构与"每文档最多 2 条"折叠规则不变。
+- 短查询（<3 字符）由 lexical bigram 兜底——两套机制互补。
+
+### 聊天流式（`POST /api/chat/stream`）
+
+- SSE 事件序：`meta`（conversation_id + used_* 摘要）→ `delta`×N → `done`（完整 answer + 全量引用）；LLM 异常发 `error` 事件（HTTP 200 内）。
+- DB 连接前置阶段用完即关（LLM 流最长 90s 不持写锁）；answer 落库 + memory extraction 在 `done` 帧后执行。
+- 本地演示模式按 40 字符分块 yield；LLM 模式 httpx 流式解析 OpenAI `data:` 行，**不做重试**（流不可安全重放）。
+- 前端 `Chat.vue`：fetch + ReadableStream 解析 SSE，assistant 气泡增量更新，`error`/网络失败上屏。
+
+### 过程错误（如实登记）
+
+**E1 · 真实库守卫失守**：13:38 的后台播种命令只设了 `SEED_DB_PATH` 没设 `DATABASE_PATH`，`import app.main` 即以默认路径对 `data/personal_ai_os.db` 执行了 `init_db()`——sha256 由 `008ecb5c…` 变为 `c459084d…`。**影响评估：init_db 仅幂等 DDL/条件迁移，`integrity_check=ok`，16 文档/17 记忆/51 会话/94 消息全部在位，无数据损失**（新增的恰是 FTS 结构本身，与 008 上线后的自然状态一致）。教训已固化：播种脚本必须同时校验 `DATABASE_PATH` 指向 temp。
+
+```text
+pytest tests/test_fts_and_stream.py -q → 10 passed（迁移幂等/触发器同步/级联/短查询回退/降级/事件序/落库/复用/404/error 事件）
+pytest -q                             → 579 passed（569 + 10，零回归）
+ruff check app tests                  → All checks passed
+npm run build                         → ✓ 3.55s（index-GKLiuhH0.js）
+Playwright e2e_chat_stream.mjs（18773）→ 6/6（增量渲染、资料证据引用《项目笔记.md》、同会话续聊、无页面错误）
+```
+
+冒烟修正（非产品缺陷）：导航标签是「AI 助手」非「聊天」；`SELECT lastrowid` 不是合法 SQL（用 `cursor.lastrowid`）。
+
+未执行：真实 LLM 端点的流式联调（本地无 Key，SSE 解析由单测覆盖解析逻辑路径）；FTS 对 >10k chunks 的性能基线。

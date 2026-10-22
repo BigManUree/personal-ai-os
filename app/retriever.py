@@ -82,6 +82,30 @@ MemoryRetriever = Callable[[sqlite3.Connection, str, int], list[dict[str, Any]]]
 DocumentRetriever = Callable[[sqlite3.Connection, str, int], list[dict[str, Any]]]
 
 
+def _fts_boost(conn: sqlite3.Connection, query: str, max_rows: int = 50) -> dict[int, float]:
+    """Return {chunk_id: bonus} from the FTS5 trigram index, empty on any error.
+
+    bm25() returns NEGATIVE numbers where smaller = more relevant, so the
+    bonus is (3.0 + rank) clamped at 0: the best match gets ~3.0, weak
+    matches get less. Failures (missing table on exotic SQLite builds,
+    malformed query) degrade to pure lexical scoring silently.
+    """
+    terms = [t for t in query.replace('"', " ").split() if len(t) >= 3]
+    if not terms:
+        return {}
+    match_expr = " ".join('"' + t + '"' for t in terms)
+    try:
+        rows = conn.execute(
+            "SELECT rowid, bm25(document_chunks_fts) AS rank "
+            "FROM document_chunks_fts WHERE document_chunks_fts MATCH ? "
+            "ORDER BY rank LIMIT ?",
+            (match_expr, max_rows),
+        ).fetchall()
+    except sqlite3.Error:
+        return {}
+    return {r[0]: max(0.0, 3.0 + r[1]) for r in rows}
+
+
 def search_chunks(conn: sqlite3.Connection, query: str, limit: int = 6) -> list[dict[str, Any]]:
     """Keyword search over document chunks with provenance.
 
@@ -107,6 +131,10 @@ def search_chunks(conn: sqlite3.Connection, query: str, limit: int = 6) -> list[
         heading_boost = 1 if (row.get("heading") and any(t in tokenize(row["heading"]) for t in query_tokens)) else 0
         row["score"] += filename_boost + heading_boost
         row["excerpt"] = row["content"][:280]
+    boosts = _fts_boost(conn, query)
+    for row in rows:
+        if row["chunk_id"] in boosts:
+            row["score"] = row["score"] + boosts[row["chunk_id"]]
     hits = [r for r in rows if r["score"] > 0]
     hits.sort(key=lambda r: (r["score"], r["document_id"], -r["chunk_index"]), reverse=True)
 

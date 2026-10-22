@@ -1,6 +1,6 @@
 # 当前任务
 
-更新时间：2026-10-22 13:25 CST
+更新时间：2026-10-22 13:50 CST
 
 ## 任务目标
 
@@ -30,9 +30,21 @@ lifecycle 文件复跑 → 8 次连跑全绿（0.6 节修复后）
 - **CI 首跑全绿**（run 39720882736）：ubuntu 38s / windows 2m41s / frontend 13s，Linux 平台差异为零。
 - **main.py 拆分完成**：821 行 + `app/api/` 九个域 router + `app/schema_migrations.py`。打点兼容设计（`_root` 晚绑定 + re-export）使 55 处 `app.main.DB_PATH` patch 与全部既有测试零改动通过。详见 `docs/testing.md` 0.10 节。
 
+## 已完成（本轮新增）
+
+**feature 008：FTS5 文档检索 + 聊天流式输出**（`specs/008-fts-and-streaming/`，579 passed）。
+
+- FTS：`_migrate_chunks_fts`（trigram external-content 表 + 触发器 + 幂等回填）；`retriever._fts_boost` bm25 加成、异常静默回退 lexical。
+- 流式：`POST /api/chat/stream` SSE（meta/delta/done/error），`Chat.vue` fetch + ReadableStream 增量渲染。
+- **E1 教训**：后台播种必须显式设 `DATABASE_PATH`，否则 `import app.main` 会打到真实库（本次仅幂等 DDL，数据完好，见 0.11 节）。
+
 ## 唯一下一步
 
-**FTS5 检索与聊天流式输出**（审查报告最后的两个功能项）。FTS5：`document_chunks` 表建虚拟表 + 触发器同步，`retriever.search_chunks` 换 MATCH 查询，注意中文分词（FTS5 默认 unicode61 对中文按字切分，可用 trigram 或保持现状）。流式输出：`/api/chat` 改 SSE（`StreamingResponse`），前端 `Chat.vue` 用 fetch + ReadStream 渲染；`call_llm` 已有 httpx，流式读 `response.aiter_lines()`。
+**功能项已全部关闭。** 剩余为可选项，按需择一：
+
+1. phase 3–5 spec 补齐或豁免（文档工作）。
+2. 给 `app/api/` 各 router 补 OpenAPI `tags`（改善 /docs 分组）。
+3. 真实 LLM Key 联调流式链路（需要用户提供 Key）。
 
 ### 再往后
 

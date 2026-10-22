@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { api, esc } from '../api'
 import { useToast } from '../toast'
 const { show } = useToast()
@@ -39,15 +39,50 @@ async function send() {
   messages.value.push({ role: 'user', content: text })
   sending.value = true
   await nextTick(); scrollBottom()
+  const reply = reactive({ role: 'assistant', content: '' })
+  let sawDone = false
   try {
-    const data: any = await api('/api/chat', {
-      method: 'POST', body: JSON.stringify({ message: text, conversation_id: currentConvId.value }),
+    const resp = await fetch('/api/chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, conversation_id: currentConvId.value }),
     })
-    currentConvId.value = data.conversation_id
-    messages.value.push({ role: 'assistant', content: data.answer })
+    if (!resp.ok || !resp.body) throw new Error('HTTP ' + resp.status)
+    messages.value.push(reply)
+    const reader = resp.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      let sep: number
+      while ((sep = buffer.indexOf('\n\n')) >= 0) {
+        const frame = buffer.slice(0, sep)
+        buffer = buffer.slice(sep + 2)
+        const evLine = frame.split('\n').find((l) => l.startsWith('event:'))
+        const dataLine = frame.split('\n').find((l) => l.startsWith('data:'))
+        if (!evLine || !dataLine) continue
+        const event = evLine.slice(6).trim()
+        const payload = JSON.parse(dataLine.slice(5))
+        if (event === 'meta') {
+          currentConvId.value = payload.conversation_id
+        } else if (event === 'delta') {
+          reply.content += payload.t
+          await nextTick(); scrollBottom()
+        } else if (event === 'done') {
+          sawDone = true
+          reply.content = payload.answer
+        } else if (event === 'error') {
+          reply.content = (reply.content ? reply.content + '\n\n' : '') + '生成失败：' + payload.detail
+        }
+      }
+    }
+    if (!sawDone && !reply.content) reply.content = '连接中断，未收到回答。'
     loadConvs()
   } catch (e: any) {
-    messages.value.push({ role: 'assistant', content: '请求失败：' + e.message })
+    if (reply.content) reply.content += '\n\n请求失败：' + e.message
+    else messages.value.push({ role: 'assistant', content: '请求失败：' + e.message })
   } finally {
     sending.value = false
     await nextTick(); scrollBottom()

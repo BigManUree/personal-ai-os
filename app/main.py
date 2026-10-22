@@ -47,6 +47,7 @@ STATIC_DIR = ROOT / "app" / "static"
 DB_PATH = Path(os.getenv("DATABASE_PATH", str(ROOT / "data" / "personal_ai_os.db")))
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 from app.schema_migrations import (  # noqa: E402
+    _migrate_chunks_fts,
     _migrate_data_sources,
     _migrate_documents,
     _migrate_memories,
@@ -716,6 +717,7 @@ def init_db() -> None:
         _migrate_data_sources(conn)
         _migrate_recommendations(conn)
         _migrate_reminder_scheduler_runs(conn)
+        _migrate_chunks_fts(conn)
         conn.executescript(notification_delivery.SCHEMA_SQL)
 
 

@@ -9,6 +9,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+if not os.environ.get("DATABASE_PATH"):
+    raise SystemExit("refusing to seed: DATABASE_PATH not set (would touch the real database)")
+
 DB = Path(os.environ["SEED_DB_PATH"])
 for suffix in ("", "-wal", "-shm"):
     p = Path(str(DB) + suffix)
