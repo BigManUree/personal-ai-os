@@ -46,6 +46,3 @@ frontend/node_modules/
 
 # AI assistant workspace data
 .workbuddy/
-
-# stray artifacts
-({text
