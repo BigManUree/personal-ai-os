@@ -98,6 +98,8 @@ body {
       disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0;
   }
   .btn-primary {
+    /* 必须内联基类：页面全部用裸 btn-primary，不带 btn（否则圆角/内边距/布局全丢） */
+    @apply btn;
     background: rgb(var(--accent-strong));
     color: #fff;
     box-shadow: 0 10px 24px rgb(79 70 229 / 0.30);

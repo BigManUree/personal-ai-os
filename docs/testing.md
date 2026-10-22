@@ -1002,3 +1002,21 @@ e2e_snooze.mjs  → 15/15（重播种临时库 18784；首轮崩溃为库被部�
 ```
 
 回滚：`temp/bak-style-btn-r2.css` 或 `git revert <commit>`。
+
+## 0.18 主按钮锐角根因修复（feature 013 追加，2026-10-22 16:20）
+
+用户 8 张截图（开始对话/新对话/发送/保存/上传/保存到知识库/新建数据源/保存设置）显示主按钮是**无圆角、无内边距样式的紫色方块**。
+
+**E1 根因**：`.btn-primary` 是唯一没有 `@apply btn` 基类的变体（`.btn-secondary/.btn-danger/.btn-ghost` 都有），而页面全部用裸 `class="btn-primary"`（不带 `btn`）——基类的 `rounded-2xl/px-5/inline-flex/font-semibold` 全部缺失，只剩颜色+阴影。次要按钮因 @apply 内联了基类而正常，所以只有主按钮坏。**这是 013 首版就存在的缺陷，之前的截图自审恰好都拍了次要按钮密集页，漏过了主按钮。**
+
+修复：`.btn-primary` 加 `@apply btn`（`frontend/src/style.css`，1 处）。构建产物回读确认 `.btn-primary` 现含 `border-radius:1rem; padding:.5rem 1.25rem; display:inline-flex; font-weight:600`。
+
+```text
+npm run build → ✓ 4.41s（index-BADqyH8c.css）；8000 线上 index.html 已指向新 hash
+程序化断言    → Playwright getComputedStyle 扫描页面全部 button，border-radius < 8px 的数量 = 0
+pytest -q     → 579 passed, 1 skipped（零回归）
+截图          → temp/ui-fix-{chat,knowledge,connectors,settings}.png
+新增脚本      → frontend/btn_verify.mjs（线上按钮圆角断言）
+```
+
+**教训**：组件类拆「基类 + 变体」时，变体必须要么 @apply 基类、要么页面强制组合写法；截图自审要覆盖每种变体，不能只看同一类页面。
