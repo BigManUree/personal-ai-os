@@ -15,7 +15,7 @@ from app import (
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["项目与任务"])
 
 PROJECT_STATUSES = {"planning", "active", "paused", "completed", "archived"}
 PROJECT_EVENT_TYPES = {"progress", "decision", "issue", "learn", "note"}

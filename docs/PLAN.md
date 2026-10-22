@@ -3,7 +3,7 @@
 > 本文档是项目唯一的总体计划来源。每个阶段开工前，必须先在 `docs/plans/` 创建对应的阶段实现文档，再开始实现；实现中遇到的每个错误，都要整理到 `docs/errors/` 下的错误文档中。
 
 - 创建日期：2026-10-11
-- 当前阶段：阶段 1（MVP 基础系统）已实现，待本机启动验证
+- 当前状态：阶段 1–4 已实现并测试覆盖（579 用例）；阶段 5 按安全边界设计豁免（见 `specs/011-phase5-agent-exemption/spec.md`）
 - 项目根目录：`D:\develop\VibeCodingProjects\personal-ai-os-mvp`
 
 ---
@@ -90,20 +90,20 @@ MVP 阶段刻意不引入 PostgreSQL、pgvector、LangGraph 和多 Agent：初�
 - 验收标准：能从历史信息中找到相关事实，展示记忆来源，允许纠错和删除。
 - 实现文档：`docs/plans/phase-2-long-term-memory.md`（已创建）
 
-### 阶段 3：个人数据接入
+### 阶段 3：个人数据接入（已实现，验收对照见 `specs/009-phase3-data-import/spec.md`）（已实现，验收对照见 `specs/009-phase3-data-import/spec.md`）
 - 范围：PDF、Word、Markdown 导入；日程、任务、GitHub 项目等授权数据源。
 - 验收标准：数据可增量同步、查看来源、追踪失败记录、撤销授权。
-- 实现文档：开工前创建 `docs/plans/phase-3-data-import.md`
+- 实现文档：`docs/plans/phase-3-personal-data-center.md`（已创建）
 
-### 阶段 4：个人分析与建议
+### 阶段 4：个人分析与建议（已实现，验收对照见 `specs/010-phase4-analysis/spec.md`）（已实现，验收对照见 `specs/010-phase4-analysis/spec.md`）
 - 范围：目标、任务、行为记录和复盘机制；每日计划、每周总结、阶段性建议。
 - 验收标准：每条重要建议都有数据依据、明确执行步骤和可验证的结果指标。
-- 实现文档：开工前创建 `docs/plans/phase-4-analysis.md`
+- 实现文档：`docs/plans/phase-4-personalization-engine.md` 等（已创建）
 
-### 阶段 5：受控 Agent 自动化
+### 阶段 5：受控 Agent 自动化（按设计豁免，见 `specs/011-phase5-agent-exemption/spec.md`）（按设计豁免，见 `specs/011-phase5-agent-exemption/spec.md`）
 - 范围：工具注册、白名单、权限校验、审批后执行、审计日志、失败恢复。
 - 验收标准：未经确认的高风险操作无法执行；批准后的操作也只能在已授权范围内执行。
-- 实现文档：开工前创建 `docs/plans/phase-5-agent.md`
+- 实现文档：`docs/plans/phase-5-1.3.5-reminders-*.md` 等（已创建）；执行器部分按豁免口径延后
 
 **为什么阶段 2 优先于多 Agent**：需要的不是一个会调用很多工具的 AI，而是能长期、准确理解你的个人 AI。记忆质量、数据来源和反馈机制决定它能否持续给出适合你的建议。
 

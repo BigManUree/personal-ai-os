@@ -18,7 +18,7 @@ from app import recommendations as rec_store
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["智能建议"])
 
 class RecommendationGenerateIn(BaseModel):
     days: int = 7

@@ -12,7 +12,7 @@ from app import (
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["提醒中心"])
 
 @router.get("/api/reminders")
 def list_reminders_api(status: str | None = None, include_terminal: bool = False, limit: int = 50) -> list[dict[str, Any]]:

@@ -17,7 +17,7 @@ from app.document_parse import DocumentParseError, Page
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["知识库"])
 
 
 def _store_parsed_document(

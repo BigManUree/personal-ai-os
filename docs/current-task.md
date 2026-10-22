@@ -1,6 +1,6 @@
 # 当前任务
 
-更新时间：2026-10-22 13:50 CST
+更新时间：2026-10-22 14:00 CST
 
 ## 任务目标
 
@@ -38,29 +38,11 @@ lifecycle 文件复跑 → 8 次连跑全绿（0.6 节修复后）
 - 流式：`POST /api/chat/stream` SSE（meta/delta/done/error），`Chat.vue` fetch + ReadableStream 增量渲染。
 - **E1 教训**：后台播种必须显式设 `DATABASE_PATH`，否则 `import app.main` 会打到真实库（本次仅幂等 DDL，数据完好，见 0.11 节）。
 
-## 唯一下一步
+## 已完成（本轮新增）
 
-**功能项已全部关闭。** 剩余为可选项，按需择一：
+- OpenAPI tags：9 个 router 分 9 组（84 操作），`/docs` 可按域浏览。
+- phase 3–5 spec 收口：009（数据接入，已实现对照）/ 010（分析建议，已实现对照）/ 011（受控 Agent，按安全边界豁免）；`docs/PLAN.md` 阶段状态同步。
 
-1. phase 3–5 spec 补齐或豁免（文档工作）。
-2. 给 `app/api/` 各 router 补 OpenAPI `tags`（改善 /docs 分组）。
-3. 真实 LLM Key 联调流式链路（需要用户提供 Key）。
+## 唯一待办
 
-### 再往后
-
-1. phase 3–5 spec 补齐或豁免。
-2. 可选：给 `app/api/` 各 router 补 `tags` 便于 OpenAPI 文档分组。 项目至今不是 git 仓库——七批 feature 的回滚全靠 `temp/bak-*` 手工备份，这在真实开发里不可持续。
-
-| 步骤 | 内容 |
-| --- | --- |
-| 1 | `git init` + 首次提交（`temp/`、`data/`、`.venv/`、`__pycache__` 进 `.gitignore`；`data/secret.key` 绝不入库） |
-| 2 | `ruff check app tests` 清理现有告警（预期主要是 import 顺序与未用变量），配置进 `pyproject.toml` |
-| 3 | GitHub Actions：`compileall + pytest + npm ci && npm run build`，Windows 与 Linux 各跑一遍（0.6 节的 READONLY 竞争是 Windows 特有，CI 双平台才有意义） |
-
-注意：初始化 git 前先向用户确认——这是仓库级变更，且需要用户决定远端托管位置。
-
-### 再往后
-
-1. `app/main.py` 拆分（3,479 行 / 88 路由）。
-2. FTS5 检索、聊天流式输出。
-3. phase 3–5 spec 补齐或豁免。
+**真实 LLM Key 联调流式链路**——需要用户提供 `LLM_API_KEY` + `LLM_BASE_URL`（OpenAI 兼容端点）。SSE 解析已有单测，未打过真实端点；联调时重点看：delta 边界、`[DONE]` 处理、网络中断时 error 事件。

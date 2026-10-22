@@ -18,7 +18,7 @@ from app.api.work import _validate_iso_date
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["画像条目"])
 
 # ===== Personal AI OS 1.3.1 profile items (inserted block begin) =====
 

@@ -21,7 +21,7 @@ from app.document_parse import Page
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["数据源"])
 
 
 class DataSourceIn(BaseModel):

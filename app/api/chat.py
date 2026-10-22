@@ -21,7 +21,7 @@ from app import (
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["对话"])
 
 class ChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=12000)

@@ -17,7 +17,7 @@ from app import (
 
 logger = logging.getLogger("personal_ai_os.api")
 
-router = APIRouter()
+router = APIRouter(tags=["记忆与画像"])
 
 MEMORY_TYPES = {"fact", "preference", "goal", "experience", "pattern", "other"}
 SOURCE_TYPES = {"conversation", "manual", "import"}
