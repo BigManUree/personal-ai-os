@@ -1,6 +1,6 @@
 # 当前任务
 
-更新时间：2026-10-22 11:55 CST
+更新时间：2026-10-22 12:10 CST
 
 ## 任务目标
 
@@ -25,9 +25,16 @@ lifecycle 文件复跑 → 8 次连跑全绿（0.6 节修复后）
 真实库             → sha256=008ecb5c…ddfb、size=389120、mtime=2026-10-14 23:11:17，始终未被写入
 ```
 
+## 已完成（本轮新增）
+
+- Git 初始化 + 首次提交 `b3388af` + 推送 `origin/main`（`https://github.com/BigManUree/personal-ai-os.git`）。
+- ruff 全绿（配置见 0.9 节），顺带修掉一个真缺陷：`NotificationConfigError` 被引用但从未定义。
+- `.github/workflows/ci.yml` 双平台 CI 就位。
+- 播种脚本收编进 `scripts/e2e/` 并入库，文档引用同步。
+
 ## 唯一下一步
 
-**工程化收口：Git 初始化 + ruff + CI。** 项目至今不是 git 仓库——七批 feature 的回滚全靠 `temp/bak-*` 手工备份，这在真实开发里不可持续。
+**观察 CI 首跑并修平台差异。** 推送已触发 Actions（若仓库已启用 CI）：确认 ubuntu 与 windows 两个 backend job、frontend job 的结果。预期风险点是 Linux 上个别测试的路径/时区假设。如有失败，按失败清单逐个修——它们就是"换平台才会暴露"的真实缺陷。 项目至今不是 git 仓库——七批 feature 的回滚全靠 `temp/bak-*` 手工备份，这在真实开发里不可持续。
 
 | 步骤 | 内容 |
 | --- | --- |

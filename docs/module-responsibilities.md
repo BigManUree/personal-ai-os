@@ -57,3 +57,6 @@
 - API：`TestClient` + 临时数据库 + monkeypatch `app.main.DB_PATH`。
 - 外部网络：httpx `MockTransport`/DNS 打桩。
 - SQLite 并发：真实多连接；服务多进程、lease、fencing 和 stale recovery 使用真实 OS 子进程和临时库。
+
+| `.github/workflows/ci.yml` | 双平台 CI（ruff + compileall + pytest；前端 npm ci + build） | GitHub Actions | GitHub 托管 runner | 数据库与密钥永不入库，CI 不接触真实数据 |
+| `scripts/e2e/*.py` | 各页面 Playwright 冒烟的播种脚本（从 temp/ 收编入库） | Python 脚本 | 临时 SQLite 文件 | 只写系统 Temp 下的隔离库，不得指向真实开发库 |

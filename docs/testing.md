@@ -1,6 +1,6 @@
 # 测试记录
 
-更新时间：2026-10-22 11:55 CST
+更新时间：2026-10-22 12:10 CST
 
 ## 0. 2026-10-21 缺陷修复批次（当前结论）
 
@@ -735,3 +735,27 @@ Playwright frontend/e2e_credential.mjs（播种库 18771）→ 12/12
 
 - `execSync` 在 Windows 走 cmd.exe，`.venv/...` 路径无法解析 → 改 `execFileSync` + `path.resolve`。
 - 前两轮冒烟在中途崩溃后残留已保存凭据，第三轮"初始未配置"假 FAIL → 重置播种库后 12/12。
+
+## 0.9 工程化收口：ruff + Git 初始化 + CI（2026-10-22 12:10）
+
+### ruff（E1）
+
+`pyproject.toml` 新增 `[tool.ruff]`：`select = ["E4","E7","E9","F","I","UP","RUF100"]`，line-length 120，`UP017` 显式忽略（避免 99 处 `datetime.timezone.utc` 纯重命名），排除 `frontend/temp/data/app/static`。
+
+- 自动修复 89 处（import 排序 29、unused noqa 25、unused import 10、注解/编码等 25）。
+- 手工修复 13 处：E702 分号行 8、F841 未用变量 3、F811 重复测试定义 2（`tests/test_reminder_scheduler.py` 的 snooze 回归与越界拒绝测试被整段复制了一份，pytest 只跑后面那份——删除第二份，覆盖率不变）。
+- **真缺陷（E2）**：`app/notification_delivery.py` 三处 `raise NotificationConfigError(...)` 引用一个**不存在的类**——非法渠道触发时会是 `NameError` 而非结构化 400。当前所有调用方只传合法渠道所以从未触发。修复：补上 `NotificationConfigError(NotificationError)` 定义（备份 `temp/bak-notification-delivery-008.py`）。
+- 终态：`ruff check app tests` → All checks passed；`pytest -q` → 569 passed（修复前后一致）。
+
+### Git 初始化与推送（E3）
+
+- `.gitignore` 增补 `*.key`、`temp/`、`frontend/node_modules/`、`.workbuddy/`；新增 `.gitattributes`（`* text=auto`）。
+- `data/`（库+密钥）、`temp/`（手工备份与冒烟产物）、`.workbuddy/`（AI 工作区）全部不入库；暂存清单核查无 `.key/.db/.env` 文件。
+- 冒烟播种脚本从 `temp/` 收编进 `scripts/e2e/`（5 个），README 与 `docs/module-responsibilities.md` 引用同步更新。
+- 首次提交 `b3388af`（210 文件，859 KiB），推送 `origin/main` 成功，`git ls-remote` 确认远端 SHA 一致。
+
+### CI（`.github/workflows/ci.yml`）
+
+- `backend` job：ubuntu + windows 矩阵（0.6 节的 READONLY 竞争是 Windows 特有，双平台才有区分度）——pip 安装 → `ruff check` → `compileall` → `pytest -q`。
+- `frontend` job：node 20 + `npm ci` → `npm run build` → 校验 `app/static/index.html` 与 hash 产物存在。
+- 未执行：CI 首次真实运行（需推送后观察 Actions 结果；Linux 上 pytest 是否全绿属待验证项）。
