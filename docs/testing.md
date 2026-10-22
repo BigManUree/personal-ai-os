@@ -842,3 +842,26 @@ Playwright e2e_chat_stream.mjs（18773）→ 6/6（增量渲染、资料证据�
 冒烟修正（非产品缺陷）：导航标签是「AI 助手」非「聊天」；`SELECT lastrowid` 不是合法 SQL（用 `cursor.lastrowid`）。
 
 未执行：真实 LLM 端点的流式联调（本地无 Key，SSE 解析由单测覆盖解析逻辑路径）；FTS 对 >10k chunks 的性能基线。
+
+## 0.12 真实模型路径联调（mock LLM 端点，2026-10-22 14:20）
+
+真实 Key 尚未提供，改用**本地 OpenAI 兼容 mock 端点**（`temp/mock_llm_server.py`：流式 SSE 12 字符分片 + `[DONE]`、非流式 JSON、`/toggle_fail` 断流开关）与 app 双进程联调（18775↔18778）。**这一步把"等 Key"从阻塞项变成了可提前完成的验证**——真实端点只是换 URL。
+
+### 两个真产品发现（均由联调捕获，均已修复）
+
+**E1 · 提取器的密钥过滤漏过连字形态**：`机密信息请勿保存 api-key-sk-123` 进入候选——既有模式要求 `api key` 后跟 `:`/`=`（`app/memory_extract.py:38-45`），连字嵌入形态不命中。修复：新增 `\b\w*key\w*[-_][a-z0-9][a-z0-9_-]{3,}\b` 模式（宁枉勿纵，误拦代价远小于泄密）。回归测试 `test_extraction_filters_hyphenated_key_shaped_secrets` 钉住 3 形态。
+
+**E2 · 上游流中断被当成完整回答**：mock 在发 2 片后硬断连接（无 `[DONE]` 无异常），app 端 `aiter_lines` 正常结束 → **部分回答被落库并发 `done`**——真实网络闪断正是此形态。修复：`_llm_stream_delta` 跟踪 `saw_done`，缺失则抛 502（→ SSE error 事件）。
+
+### 验证（13 项，全部通过）
+
+```text
+事件序 meta→delta×N→done / 无 error（健康流）
+delta 拼接 == done.answer（12 字符分片边界无损）
+回答为模型内容而非本地演示 / 用户+助手消息落库
+非流式 /api/chat 走通 mock（response_format 分流修复后）
+extraction 经真实模型路径产生候选 / 密钥形态被过滤 / 正常候选在列
+断流开关生效 / 断流收到 error 事件 / error 前部分 delta 可见 / HTTP 200
+```
+
+mock/验证脚本：`temp/mock_llm_server.py`、`temp/verify_mock_llm.py`（临时工具，不入库；正式回归在 `tests/test_fts_and_stream.py`）。真实库 sha256 未变（c459084d…，13:38 后保持）。**未执行**：真实云端端点的延迟/限流行为（仍需用户提供 Key）。

@@ -188,6 +188,23 @@ def test_chat_stream_reuses_conversation_and_rejects_unknown(isolated_db, monkey
     assert bad.status_code == 404
 
 
+def test_extraction_filters_hyphenated_key_shaped_secrets(isolated_db, monkeypatch):
+    """E1 (feature 009 mock integration): 'api-key-sk-123' style embedded
+    credentials used to slip past the ":"-anchored patterns."""
+    from app import memory_extract
+
+    raw = json.dumps({"candidates": [
+        {"content": "机密信息请勿保存 api-key-sk-123", "memory_type": "fact",
+         "confidence": 0.8, "reason": "疑似凭据"},
+        {"content": "openai_key-abcdef123456 是我常用的", "memory_type": "fact",
+         "confidence": 0.8, "reason": "疑似凭据"},
+        {"content": "正常内容没有凭据", "memory_type": "fact",
+         "confidence": 0.9, "reason": "普通事实"},
+    ]}, ensure_ascii=False)
+    cands = memory_extract.parse_extraction_json(raw, 1)
+    assert [c["content"] for c in cands] == ["正常内容没有凭据"]
+
+
 def test_chat_stream_error_event_when_llm_fails(isolated_db, monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "test-key")
     monkeypatch.setenv("LLM_BASE_URL", "http://127.0.0.1:9")  # nothing listens here

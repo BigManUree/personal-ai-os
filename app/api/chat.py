@@ -203,15 +203,22 @@ async def _llm_stream_delta(message: str, profile: dict[str, Any], memories: lis
                 json={"model": model, "messages": messages, "temperature": 0.4, "stream": True},
             ) as response:
                 response.raise_for_status()
+                saw_done = False
                 async for line in response.aiter_lines():
                     if not line.startswith("data:"):
                         continue
                     payload = line[len("data:"):].strip()
                     if payload == "[DONE]":
+                        saw_done = True
                         break
                     piece = (json.loads(payload).get("choices") or [{}])[0].get("delta", {}).get("content")
                     if piece:
                         yield piece
+                if not saw_done:
+                    # Connection closed without [DONE]: the upstream stream was
+                    # truncated (network blip). Surface it as an error instead of
+                    # silently persisting a partial answer.
+                    raise HTTPException(status_code=502, detail="上游模型流式中断，回答不完整")
     except HTTPException:
         raise
     except Exception as exc:

@@ -40,6 +40,9 @@ MAX_MESSAGE_CHARS = 1500
 _SECRET_PATTERNS = [
     re.compile(r"(?i)(?:password|passwd|pwd|密码|口令)\s*[:：=]\s*\S+"),
     re.compile(r"(?i)(?:api[_-]?key|secret|access[_-]?token|auth[_-]?token|token|令牌|密钥)\s*[:：=]\s*[\"']?\S{6,}"),
+    # hyphenated key-shaped tokens: api-key-sk-123, openai_key-abcdef1234.
+    # The ":"-based pattern above misses these embedded forms.
+    re.compile(r"(?i)\b\w*key\w*[-_][a-z0-9][a-z0-9_-]{3,}\b"),
     re.compile(r"(?i)\bsk-[a-z0-9][a-z0-9-]{12,}"),
     re.compile(r"(?i)\bbearer\s+[a-z0-9._\-]{8,}"),
     re.compile(r"\b[a-f0-9]{40,}\b", re.IGNORECASE),
