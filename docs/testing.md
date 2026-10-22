@@ -1060,3 +1060,38 @@ pytest -q                             → 582 passed（零回归）
 ```
 
 未执行：浏览器端对话删除交互冒烟（逻辑与既有内联确认模式一致，源码断言覆盖）。
+
+## 0.20 feature 014 向量检索（2026-10-22 17:15）
+
+spec：`specs/014-vector-retrieval/`。千问 MaaS `text-embedding-v4`（1024 维、归一化、批量 10），OpenAI 兼容端点。
+
+### 端点事实（实测）
+
+```text
+8011930              → 404 model_not_found（控制台部署 ID，不是 API 模型名）
+text-embedding-v3/v4 → 200，dim=1024，norm=1.0，batch10 正常
+相似度分布           → 相关句 0.72 / 无关句 0.27 → 阈值取 0.45
+```
+
+### 实现
+
+| 文件 | 变更 |
+|---|---|
+| `app/embeddings.py` | 新增：批量向量化（429/5xx/超时 4 次退避）、float32 归一化存储、`ensure_chunks`/`schedule_chunks`/`backfill`/`status`/`query_scores`、查询向量 128 条 LRU 缓存 |
+| `app/schema_migrations.py` | 新增 `chunk_embeddings`（chunk_id 主键 + model/dim/vector/created_at，级联删除） |
+| `app/retriever.py` | `search_chunks` 加语义加成：`sim ≥ 0.45` 时 `score += sim × 3.0`，命中项带 `vector_similarity` |
+| `app/api/documents.py` | 入库后异步 `schedule_chunks`；新增 `GET /api/embeddings/status`、`POST /api/embeddings/reindex` |
+| `tests/test_vector_retrieval.py` | 新增 6 例（正交假向量，零网络） |
+
+### 真实验证
+
+```text
+临时库（3 篇文档，真实 embedding）：coverage 1.0 / dim 1024
+  query='晨练习惯'       lexical=0,0,0   → 晨跑笔记.md vec=0.6175  ← 纯语义召回
+  query='怎么优化查询性能' lexical=0,1,0   → 数据库笔记.md vec=0.6342
+  query='今天吃什么'      lexical=0,0,0   → 无命中（阈值挡住，不注入噪声）
+真实库 data/personal_ai_os.db：reindex 16/16，coverage 1.0，dim 1024
+pytest -q → 587 passed, 1 skipped（+6 零回归）
+```
+
+**未执行**：10 万 chunk 级性能基线；换模型（如 v3）后的自动重算实测（逻辑上按 model 过滤，未跑真实切换）。

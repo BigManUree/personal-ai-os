@@ -135,6 +135,15 @@ def search_chunks(conn: sqlite3.Connection, query: str, limit: int = 6) -> list[
     for row in rows:
         if row["chunk_id"] in boosts:
             row["score"] = row["score"] + boosts[row["chunk_id"]]
+    # 语义召回：向量相似度超过阈值才加分，让「零词法重叠但语义相关」的片段进结果。
+    from app import embeddings
+    vector_scores = embeddings.query_scores(conn, query)
+    if vector_scores:
+        for row in rows:
+            sim = vector_scores.get(row["chunk_id"])
+            if sim is not None and sim >= embeddings.SIM_THRESHOLD:
+                row["score"] = row["score"] + sim * embeddings.VECTOR_WEIGHT
+                row["vector_similarity"] = round(sim, 4)
     hits = [r for r in rows if r["score"] > 0]
     hits.sort(key=lambda r: (r["score"], r["document_id"], -r["chunk_index"]), reverse=True)
 

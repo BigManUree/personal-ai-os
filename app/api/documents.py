@@ -12,6 +12,7 @@ from app import (
     behavior_events,
     document_chunk,
     document_parse,
+    embeddings,
 )
 from app.document_parse import DocumentParseError, Page
 from app.schema_migrations import rebuild_chunks_fts as migrations_rebuild
@@ -50,6 +51,11 @@ def _store_parsed_document(
              chunk.heading, chunk.char_count, timestamp),
         )
     conn.execute("UPDATE documents SET chunk_count=? WHERE id=?", (len(chunks), document_id))
+    # 向量索引在事务提交后异步补齐（不把网络往返压在写锁里，失败不影响入库）
+    chunk_ids = [r[0] for r in conn.execute(
+        "SELECT id FROM document_chunks WHERE document_id=? ORDER BY chunk_index", (document_id,)
+    ).fetchall()]
+    embeddings.schedule_chunks(chunk_ids)
     _root.record_behavior_event(
         conn,
         behavior_events.EVENT_DOCUMENT_CREATED,
@@ -156,3 +162,18 @@ def delete_document(document_id: int) -> dict[str, bool]:
 
 
 
+
+
+@router.get("/api/embeddings/status")
+def embeddings_status() -> dict[str, Any]:
+    with _root.db() as conn:
+        return embeddings.status(conn)
+
+
+@router.post("/api/embeddings/reindex")
+def embeddings_reindex(limit: int = 200) -> dict[str, Any]:
+    """补齐缺失向量（分批调用直至 remaining=0）。"""
+    if limit < 1 or limit > 1000:
+        raise HTTPException(status_code=400, detail="limit 必须在 1..1000 之间")
+    with _root.db() as conn:
+        return embeddings.backfill(conn, limit)

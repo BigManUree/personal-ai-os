@@ -221,3 +221,13 @@ def rebuild_chunks_fts(conn: sqlite3.Connection) -> None:
     the index is derived data.
     """
     conn.execute("INSERT INTO document_chunks_fts(document_chunks_fts) VALUES('rebuild')")
+
+
+def _migrate_chunk_embeddings(conn: sqlite3.Connection) -> None:
+    """向量索引表（派生数据：缺失即补、模型变更即重算、可整表重建）。"""
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS chunk_embeddings ("
+        "chunk_id INTEGER PRIMARY KEY REFERENCES document_chunks(id) ON DELETE CASCADE, "
+        "model TEXT NOT NULL, dim INTEGER NOT NULL, vector BLOB NOT NULL, created_at TEXT NOT NULL)"
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_model ON chunk_embeddings(model)")
